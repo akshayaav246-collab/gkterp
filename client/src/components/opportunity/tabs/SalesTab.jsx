@@ -422,6 +422,8 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                             placeholder="Enter Name"
                         />
                     </div>
+
+                    {/* Month/Year Selection */}
                     <div className="grid grid-cols-2 gap-2">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Yr</label>
@@ -450,6 +452,8 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                             </select>
                         </div>
                     </div>
+
+                    {/* No. of Days - Smaller visual width (w-1/2) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">No. of Days</label>
                         <input
@@ -457,29 +461,33 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                             value={formData.days || ''}
                             onChange={(e) => handleChange('root', 'days', parseInt(e.target.value) || 0)}
                             disabled={!isEditing}
-                            className={inputClass}
+                            className={`${inputClass} w-2/3`}
                             placeholder="0"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                        <input
-                            type="date"
-                            value={formData.commonDetails?.startDate ? formData.commonDetails.startDate.split('T')[0] : ''}
-                            onChange={(e) => handleChange('commonDetails', 'startDate', e.target.value)}
-                            disabled={!isEditing}
-                            className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                        <input
-                            type="date"
-                            value={formData.commonDetails?.endDate ? formData.commonDetails.endDate.split('T')[0] : ''}
-                            onChange={(e) => handleChange('commonDetails', 'endDate', e.target.value)}
-                            disabled={!isEditing}
-                            className={inputClass}
-                        />
+
+                    {/* Start and End Date Side-by-Side */}
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                            <input
+                                type="date"
+                                value={formData.commonDetails?.startDate ? formData.commonDetails.startDate.split('T')[0] : ''}
+                                onChange={(e) => handleChange('commonDetails', 'startDate', e.target.value)}
+                                disabled={!isEditing}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                            <input
+                                type="date"
+                                value={formData.commonDetails?.endDate ? formData.commonDetails.endDate.split('T')[0] : ''}
+                                onChange={(e) => handleChange('commonDetails', 'endDate', e.target.value)}
+                                disabled={!isEditing}
+                                className={inputClass}
+                            />
+                        </div>
                     </div>
                 </div>
             </Card >

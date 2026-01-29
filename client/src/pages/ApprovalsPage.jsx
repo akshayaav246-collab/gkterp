@@ -3,10 +3,13 @@ import axios from 'axios';
 import { useToast } from '../context/ToastContext';
 import { CheckCircle, XCircle, Bell } from 'lucide-react';
 
+import AlertModal from '../components/ui/AlertModal';
+
 const ApprovalsPage = () => {
     const { addToast } = useToast();
     const [approvals, setApprovals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null, type: 'info' });
 
     useEffect(() => {
         fetchApprovals();
@@ -26,7 +29,7 @@ const ApprovalsPage = () => {
         }
     };
 
-    const handleApprove = async (id) => {
+    const executeApprove = async (id) => {
         try {
             const token = localStorage.getItem('token');
             await axios.post(`http://localhost:5000/api/approvals/${id}/approve`, {}, {
@@ -39,20 +42,43 @@ const ApprovalsPage = () => {
         }
     };
 
-    const handleReject = async (id) => {
-        const reason = prompt('Enter rejection reason:');
-        if (!reason) return;
+    const handleApprove = (id) => {
+        setAlertConfig({
+            isOpen: true,
+            title: 'Confirm Approval',
+            message: 'Are you sure you want to approve this opportunity?',
+            confirmText: 'Approve',
+            type: 'success',
+            onConfirm: () => {
+                setAlertConfig(prev => ({ ...prev, isOpen: false }));
+                executeApprove(id);
+            }
+        });
+    };
+
+    const [rejectionModal, setRejectionModal] = useState({ isOpen: false, id: null, reason: '' });
+
+    const handleReject = (id) => {
+        setRejectionModal({ isOpen: true, id: id, reason: '' });
+    };
+
+    const confirmRejection = async () => {
+        if (!rejectionModal.reason.trim()) {
+            addToast('Please enter a rejection reason', 'error');
+            return;
+        }
 
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5000/api/approvals/${id}/reject`,
-                { reason },
+            await axios.post(`http://localhost:5000/api/approvals/${rejectionModal.id}/reject`,
+                { reason: rejectionModal.reason },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            alert('Approval rejected');
+            addToast('Approval rejected', 'info');
+            setRejectionModal({ isOpen: false, id: null, reason: '' });
             fetchApprovals();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to reject');
+            addToast(err.response?.data?.message || 'Failed to reject', 'error');
         }
     };
 
@@ -73,7 +99,7 @@ const ApprovalsPage = () => {
     if (loading) return <div className="p-5">Loading approvals...</div>;
 
     return (
-        <div className="p-5">
+        <div className="p-5 relative">
             <h1 className="text-3xl font-bold text-primary-blue mb-8">Approvals Management</h1>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
@@ -185,7 +211,61 @@ const ApprovalsPage = () => {
                     <strong>Note:</strong> Opportunities with Gross Profit (GP) below 10% require specific approval before proceeding.
                 </p>
             </div>
-        </div>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onConfirm={alertConfig.onConfirm}
+                confirmText={alertConfig.confirmText}
+                type={alertConfig.type}
+            />
+
+            {/* Custom Rejection Modal */}
+            {rejectionModal.isOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center p-4 border-b bg-red-50 rounded-t-lg">
+                            <h3 className="text-lg font-semibold text-red-800">Reject Opportunity</h3>
+                            <button
+                                onClick={() => setRejectionModal({ ...rejectionModal, isOpen: false })}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Reason for Rejection <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={rejectionModal.reason}
+                                onChange={(e) => setRejectionModal({ ...rejectionModal, reason: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none h-32 text-sm"
+                                placeholder="Please explain why this opportunity is being rejected..."
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3 p-4 border-t bg-gray-50 rounded-b-lg">
+                            <button
+                                onClick={() => setRejectionModal({ ...rejectionModal, isOpen: false })}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmRejection}
+                                disabled={!rejectionModal.reason.trim()}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Confirm Rejection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div >
     );
 };
 

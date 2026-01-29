@@ -426,13 +426,23 @@ const ClientPage = () => {
                         <p className="text-gray-500">Sector: {selectedClient.sector}</p>
                     </div>
                 </div>
-                <button
-                    onClick={startEdit}
-                    className="bg-primary-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary-blue-dark"
-                >
-                    <Edit size={16} />
-                    <span>Edit</span>
-                </button>
+                {(() => {
+                    const canEdit = user.role === 'Super Admin' ||
+                        user.role === 'Sales Executive' ||
+                        (user.role === 'Sales Manager' && (selectedClient.createdBy?._id === user.id || selectedClient.createdBy === user.id));
+
+                    if (!canEdit) return null;
+
+                    return (
+                        <button
+                            onClick={startEdit}
+                            className="bg-primary-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary-blue-dark"
+                        >
+                            <Edit size={16} />
+                            <span>Edit</span>
+                        </button>
+                    );
+                })()}
             </div>
 
             <div className="space-y-6">

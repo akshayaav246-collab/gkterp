@@ -46,8 +46,7 @@ const Sidebar = () => {
             return [
                 { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/delivery' },
                 { label: 'SME Management', icon: Users, path: '/smes' },
-                { label: 'Opportunities', icon: Package, path: '/opportunities' },
-                { label: 'Finance', icon: CreditCard, path: '/finance' }
+                { label: 'Opportunities', icon: Package, path: '/opportunities' }
             ];
         }
 

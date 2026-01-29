@@ -1,138 +1,141 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Activity, CheckCircle, Clock, AlertCircle, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+    Activity, CheckCircle, Clock, AlertCircle, TrendingUp, Users, Calendar
+} from 'lucide-react';
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line
 } from 'recharts';
-
 import { useAuth } from '../context/AuthContext';
 
 const DeliveryDashboard = () => {
-    const { updateUserRole } = useAuth();
-
-    useEffect(() => {
-        updateUserRole('Delivery Team');
-    }, []);
-
-    const [opportunities, setOpportunities] = useState([]);
-    // vendorStats removed
-    const [gpStats, setGpStats] = useState([]); // Added
-    const [selectedYear, setSelectedYear] = useState('2025-2026'); // Financial year
+    const { updateUserRole, user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
-        total: 0, active: 0, pendingApproval: 0, signedOff: 0, inProgress: 0, completed: 0
+        active: 0, scheduledMonth: 0, completed: 0, smeDeployed: 0, pendingFeedback: 0
+    });
+    const [charts, setCharts] = useState({
+        salesChart: [], vendorChart: [], avgGpChart: []
     });
 
     useEffect(() => {
-        fetchDashboardData();
-    }, [selectedYear]);
+        updateUserRole('Delivery Team');
+        fetchDashboardRevamp();
+    }, []);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardRevamp = async () => {
         try {
             const token = localStorage.getItem('token');
-            const headers = { Authorization: `Bearer ${token}` };
-
-            // Fetch Opportunities
-            const oppsRes = await axios.get('http://localhost:5000/api/opportunities', { headers });
-            setOpportunities(oppsRes.data);
-
-            // Calculate stats
-            const total = oppsRes.data.length;
-            const completed = oppsRes.data.filter(o => o.commonDetails?.status === 'Completed' || o.progressPercentage === 100).length;
-            const inProgress = oppsRes.data.length - completed;
-
-            // Legacy/Other stats if needed
-            const pendingApproval = oppsRes.data.filter(o => o.approvalRequired && o.approvalStatus !== 'Approved').length;
-
-            setStats({ total, inProgress, completed, pendingApproval });
-
-            // Vendor stats fetch removed
-
-            // Fetch GP Stats with year filter
-            const gpRes = await axios.get(`http://localhost:5000/api/dashboard/delivery/gp-stats?year=${selectedYear}`, { headers });
-            setGpStats(gpRes.data);
-
+            const res = await axios.get('http://localhost:5000/api/dashboard/delivery/revamp-stats', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setStats(res.data.stats);
+            setCharts(res.data.charts);
             setLoading(false);
         } catch (err) {
-            console.error('Error fetching dashboard data:', err);
+            console.error('Error fetching dashboard stats:', err);
             setLoading(false);
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading Analytics...</div>;
+    if (loading) return (
+        <div className="flex justify-center items-center min-h-screen bg-bg-page">
+            <div className="text-primary-blue font-semibold">Loading Analytics...</div>
+        </div>
+    );
+
+    const kpiCards = [
+        { title: 'Active Opportunities', value: stats.active, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-100' },
+        { title: 'Trainings Scheduled (This Month)', value: stats.scheduledMonth, icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
+        { title: 'Trainings Completed', value: stats.completed, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' },
+        { title: 'SMEs Deployed', value: stats.smeDeployed, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+        { title: 'Pending Feedback', value: stats.pendingFeedback, icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-100', sub: 'Completed but no doc' },
+    ];
 
     return (
         <div className="p-6 bg-bg-page min-h-screen space-y-8">
-            <h1 className="text-3xl font-bold text-primary-blue">Welcome, {useAuth().user?.name || 'User'}</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-primary-blue">Welcome, {user?.name || 'User'}</h1>
+                <button onClick={fetchDashboardRevamp} className="text-sm text-primary-blue hover:underline">Refresh Data</button>
+            </div>
 
-            {/* Dashboard Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                {/* 1. Primary KPI: Total Opportunities (Full Width on Mobile, Small on Desktop if needed, or keeping styling) */}
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex flex-col justify-between h-80">
-                    <div>
-                        <div className="flex items-center space-x-3 mb-4">
-                            <div className="p-3 bg-blue-100 rounded-full">
-                                <Activity className="text-primary-blue" size={24} />
+            {/* KPI Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {kpiCards.map((card, idx) => (
+                    <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-2">
+                            <div className={`p-2 rounded-lg ${card.bg}`}>
+                                <card.icon size={20} className={card.color} />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-700">Total Opportunities</h3>
                         </div>
-                        <p className="text-5xl font-bold text-gray-900 mb-2">{stats.total}</p>
-                        <p className="text-sm text-gray-500">Assigned Workload</p>
+                        <h3 className="text-2xl font-bold text-gray-900">{card.value}</h3>
+                        <p className="text-xs text-gray-500 font-medium mt-1">{card.title}</p>
+                        {card.sub && <p className="text-[10px] text-orange-500 mt-1">{card.sub}</p>}
                     </div>
+                ))}
+            </div>
 
-                    <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-primary-blue">{stats.inProgress}</p>
-                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">In Progress</p>
-                        </div>
-                        <div className="text-center border-l border-gray-100">
-                            <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Completed</p>
-                        </div>
+            {/* Charts Row 1 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
+
+                {/* Sales Executive Wise Count */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4">Opportunities by Sales Executive</h3>
+                    <div className="flex-1 w-full min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={charts.salesChart} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} allowDecimals={false} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                    cursor={{ fill: '#F3F4F6' }}
+                                />
+                                <Bar dataKey="count" fill="#003D7A" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* 2. Top 5 Vendors by Revenue */}
-                {/* Vendor Chart Removed */}
-            </div>
-
-            {/* Row 2: Average GP Trend */}
-            <div className="grid grid-cols-1 gap-8">
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center space-x-2">
-                            <TrendingUp className="text-primary-blue" size={20} />
-                            <h3 className="text-lg font-bold text-gray-700">Average GP % (Monthly)</h3>
-                        </div>
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(e.target.value)}
-                            className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        >
-                            <option value="2024-2025">2024-2025</option>
-                            <option value="2025-2026">2025-2026</option>
-                            <option value="2026-2027">2026-2027</option>
-                        </select>
-                    </div>
-                    <div className="h-64 w-full">
+                {/* Top 5 Vendors */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4">Top 5 Vendors (by Spend)</h3>
+                    <div className="flex-1 w-full min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={gpStats} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} unit="%" />
+                            <BarChart layout="vertical" data={charts.vendorChart} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                                <XAxis type="number" hide />
+                                <YAxis type="category" dataKey="name" width={100} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#374151' }} />
                                 <Tooltip
+                                    formatter={(value) => [`₹${value.toLocaleString()}`, 'Spend']}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                    formatter={(value) => [`${value}%`, 'Avg GP']}
                                 />
-                                <Bar dataKey="gp" fill="#1e3a8a" radius={[4, 4, 0, 0]} barSize={40} />
+                                <Bar dataKey="value" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
             </div>
 
+            {/* Charts Row 2: Monthly GP% Trend */}
+            <div className="h-80 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Average GP % (Monthly)</h3>
+                <div className="w-full h-full pb-6">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={charts.avgGpChart} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} domain={[0, 'auto']} />
+                            <Tooltip
+                                formatter={(value) => [`${value}%`, 'Avg GP']}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                            />
+                            <Legend />
+                            <Line type="monotone" dataKey="gp" stroke="#F59E0B" strokeWidth={3} dot={{ r: 4, fill: '#F59E0B' }} activeDot={{ r: 6 }} name="GP %" />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
 
         </div>
     );

@@ -546,7 +546,8 @@ router.get('/manager/monthly-performance', protect, async (req, res) => {
             name: month,
             inProgress: 0,
             completed: 0,
-            revenue: 0
+            revenue: 0,
+            revenueCount: 0
         }));
 
         // Aggregate data by month
@@ -580,8 +581,14 @@ router.get('/manager/monthly-performance', protect, async (req, res) => {
                     data[monthIndex].inProgress += 1;
                 }
 
-                const invoicedRevenue = opp.financeDetails?.clientReceivables?.invoiceAmount || 0;
-                data[monthIndex].revenue += invoicedRevenue;
+                // Use PO Value for Revenue as strictly requested
+                const poRevenue = opp.poValue || 0;
+                data[monthIndex].revenue += poRevenue;
+
+                // Count responsible for revenue
+                if (poRevenue > 0) {
+                    data[monthIndex].revenueCount += 1;
+                }
             }
         });
 
@@ -882,6 +889,165 @@ router.get('/analytics/yearly-trends', protect, async (req, res) => {
 
         res.json(result);
     } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// @route   GET /api/dashboard/delivery/revamp-stats
+// @desc    Get comprehensive stats for Delivery Dashboard
+// @access  Private (Delivery/Admin)
+router.get('/delivery/revamp-stats', protect, async (req, res) => {
+    try {
+        const year = new Date().getFullYear();
+        const startOfYear = new Date(year, 0, 1);
+        const endOfYear = new Date(year, 11, 31);
+        const currentMonthName = new Date().toLocaleString('default', { month: 'short' }); // e.g., "Jan"
+
+        // 1. Fetch All Opportunities for Calculation
+        // Delivery sees ALL opportunities generally, or we filter by permission if needed.
+        // Assuming Delivery Team sees all for now based on previous dashboard logic.
+        const opportunities = await Opportunity.find({})
+            .populate('selectedSME', 'name companyName')
+            .populate('commonDetails.sales', 'name')
+            .lean();
+
+        // --- KPI CALCULATIONS ---
+        let active = 0;
+        let scheduledMonth = 0;
+        let completed = 0;
+        let smeDeployed = 0;
+        let pendingFeedback = 0; // Completed but feedback doc missing
+
+        // --- CHART DATA PREP ---
+        const salesCountMap = {}; // { 'Sales Name': count }
+        const vendorSpendMap = {}; // { 'Vendor Name': totalExpense }
+        const monthlyGpMap = {}; // { 'Jan': { totalGp: 0, count: 0 } }
+
+        // Initialize Monthly Map
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        months.forEach(m => monthlyGpMap[m] = { totalGp: 0, count: 0 });
+
+        opportunities.forEach(opp => {
+            const status = opp.commonDetails?.status || opp.statusStage;
+            const trainingMonth = opp.commonDetails?.monthOfTraining;
+            const trainingYear = opp.commonDetails?.year; // Number
+
+            // 1. KPIs
+            const isCompleted = status === 'Completed' || opp.progressPercentage === 100;
+
+            if (isCompleted) {
+                completed++;
+                // Check Pending Feedback
+                if (!opp.deliveryDocuments?.feedback) {
+                    pendingFeedback++;
+                }
+            } else if (status !== 'Cancelled' && status !== 'Discontinued' && status !== 'Lost') {
+                active++;
+            }
+
+            // Scheduled This Month
+            if (trainingMonth === currentMonthName && trainingYear === year) {
+                scheduledMonth++;
+            }
+
+            // SME Deployed
+            if (opp.selectedSME) {
+                smeDeployed++;
+            }
+
+            // 2. Sales Executive Wise Count
+            const salesName = opp.commonDetails?.sales?.name || 'Unassigned';
+            salesCountMap[salesName] = (salesCountMap[salesName] || 0) + 1;
+
+            // 3. Vendor Spend (Using SME Company or Name)
+            // Calculate total vendor expense from this opportunity
+            const exp = opp.expenses || {};
+            const totalVendorExpense = (exp.trainerCost || 0) + (exp.material || 0) + (exp.labs || 0) + (exp.venue || 0) + (exp.travel || 0) + (exp.accommodation || 0);
+
+            if (totalVendorExpense > 0) {
+                // Prioritize SME Company Name, then SME Name, then 'Unknown'
+                let vendorName = 'Unknown';
+                if (opp.selectedSME) {
+                    vendorName = opp.selectedSME.companyName || opp.selectedSME.name;
+                } else if (opp.expenses?.vendorName) { // Fallback if we stored manual name
+                    vendorName = opp.expenses.vendorName;
+                }
+
+                vendorSpendMap[vendorName] = (vendorSpendMap[vendorName] || 0) + totalVendorExpense;
+            }
+
+            // 4. Monthly GP% (Only for current year)
+            // Use Training Month if available and current year, else ignore or fallback to createdAt?
+            // User likely wants "GP based on delivery month".
+            if (trainingYear === year && trainingMonth && monthlyGpMap[trainingMonth]) {
+                const gpPercent = opp.financials?.grossProfitPercent || 0;
+                // Only consider if GP is calculated/meaningful (e.g. > -100)
+                monthlyGpMap[trainingMonth].totalGp += gpPercent;
+                monthlyGpMap[trainingMonth].count++;
+            }
+        });
+
+        // --- FORMAT CHARTS ---
+
+        // 1. Sales Wise
+        /* Real Logic commented out for demo
+         const salesChart = Object.keys(salesCountMap).map(key => ({
+            name: key,
+            count: salesCountMap[key]
+        })).sort((a, b) => b.count - a.count);
+        */
+
+        // Mix real data with mock data as requested
+        const salesChart = [
+            ...Object.keys(salesCountMap).map(key => ({ name: key, count: salesCountMap[key] })),
+            { name: 'Priya Sharma', count: 12 },
+            { name: 'Rohan Mehta', count: 9 },
+            { name: 'Anjali Gupta', count: 7 }
+        ].sort((a, b) => b.count - a.count);
+
+
+        // 2. Top 5 Vendors (Mock Data for Demo as requested)
+        // 2. Top 5 Vendors (Mock Data for Demo as requested)
+        const vendorChart = [
+            { name: 'TechFlow Solutions', value: 1250000 },
+            { name: 'Global Knowledge', value: 980000 },
+            { name: 'LearnRight Systems', value: 750000 },
+            { name: 'EduCore Inc', value: 620000 },
+            { name: 'SkillBase', value: 450000 }
+        ];
+
+        /* Real logic commented out for demo
+        const vendorChart = Object.keys(vendorSpendMap).map(key => ({
+            name: key,
+            value: vendorSpendMap[key]
+        }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+        */
+
+        // 3. Avg GP Trend
+        const avgGpChart = months.map(m => ({
+            name: m,
+            gp: monthlyGpMap[m].count > 0 ? parseFloat((monthlyGpMap[m].totalGp / monthlyGpMap[m].count).toFixed(1)) : 0
+        }));
+
+        res.json({
+            stats: {
+                active,
+                scheduledMonth,
+                completed,
+                smeDeployed,
+                pendingFeedback
+            },
+            charts: {
+                salesChart,
+                vendorChart,
+                avgGpChart
+            }
+        });
+
+    } catch (err) {
+        console.error('Error in /delivery/revamp-stats:', err);
         res.status(500).json({ message: err.message });
     }
 });

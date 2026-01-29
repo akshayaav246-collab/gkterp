@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Users, Briefcase, CheckCircle, CircleDollarSign, IndianRupee, Target } from 'lucide-react';
+import { Users, Briefcase, CheckCircle, CircleDollarSign, IndianRupee, Target, ChevronRight } from 'lucide-react';
 import DocumentStatusCard from '../../components/dashboard/DocumentStatusCard';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -287,9 +287,12 @@ const SalesExecutiveDashboard = ({ user }) => {
                         </div>
                         <button
                             onClick={() => setShowDocModal(true)}
-                            className="text-[10px] text-primary-blue hover:text-blue-700 font-medium flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full transition-colors"
+                            className="text-[10px] text-gray-400 hover:text-primary-blue transition-colors"
                         >
-                            Open
+                            <div className="flex items-center gap-1">
+                                <span>View</span>
+                                <ChevronRight size={16} />
+                            </div>
                         </button>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-center">

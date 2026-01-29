@@ -340,133 +340,141 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
 
                     {/* 1. PO Details */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">PO Number</label>
-                        <input
-                            type="text"
-                            value={opportunity.commonDetails?.clientPONumber || 'N/A'}
-                            disabled
-                            className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">PO Date</label>
-                        <input
-                            type="text"
-                            value={opportunity.commonDetails?.clientPODate ? new Date(opportunity.commonDetails.clientPODate).toLocaleDateString() : 'N/A'}
-                            disabled
-                            className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">PO Document</label>
-                        <div className="flex items-center p-2 border border-gray-100 rounded-lg bg-gray-50 h-[42px]">
-                            {opportunity.poDocument ? (
-                                <a
-                                    href={`http://localhost:5000/${opportunity.poDocument.replace(/\\/g, '/')}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline flex items-center text-sm font-medium"
-                                >
-                                    <CheckCircle size={14} className="mr-1" /> View PO
-                                </a>
-                            ) : (
-                                <span className="text-gray-400 text-sm italic">Not Uploaded</span>
-                            )}
+                        <label className="block text-sm font-bold text-gray-900 mb-3 border-b pb-1">PO Details</label>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Number</label>
+                                <input
+                                    type="text"
+                                    value={opportunity.commonDetails?.clientPONumber || 'N/A'}
+                                    disabled
+                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Date</label>
+                                <input
+                                    type="text"
+                                    value={opportunity.commonDetails?.clientPODate ? new Date(opportunity.commonDetails.clientPODate).toLocaleDateString() : 'N/A'}
+                                    disabled
+                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Amount</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-2 text-gray-500 text-sm">₹</span>
+                                    <input
+                                        type="text"
+                                        value={opportunity.poValue ? opportunity.poValue.toLocaleString() : '0'}
+                                        disabled
+                                        className="w-full border p-2 pl-6 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Document</label>
+                                <div className="flex items-center p-2 border border-gray-100 rounded-lg bg-gray-50 h-[38px]">
+                                    {opportunity.poDocument ? (
+                                        <a
+                                            href={`http://localhost:5000/${opportunity.poDocument.replace(/\\/g, '/')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:underline flex items-center text-sm font-medium"
+                                        >
+                                            <CheckCircle size={14} className="mr-1" /> View PO
+                                        </a>
+                                    ) : (
+                                        <span className="text-gray-400 text-sm italic">Not Uploaded</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* 2. Invoice Details */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
-                        <input
-                            type="text"
-                            value={formData.commonDetails?.clientInvoiceNumber || ''}
-                            onChange={(e) => handleChange('commonDetails', 'clientInvoiceNumber', e.target.value)}
-                            disabled={!isEditing}
-                            className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Date</label>
-                        <input
-                            type="date"
-                            value={formData.commonDetails?.clientInvoiceDate ? formData.commonDetails.clientInvoiceDate.split('T')[0] : ''}
-                            onChange={(e) => handleChange('commonDetails', 'clientInvoiceDate', e.target.value)}
-                            disabled={!isEditing}
-                            className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Document</label>
-                        <div className="flex items-center space-x-2 h-[42px]">
-                            {canEdit && (
+                        <label className="block text-sm font-bold text-gray-900 mb-3 border-b pb-1">Invoice Details</label>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Number</label>
+                                <input
+                                    type="text"
+                                    value={formData.commonDetails?.clientInvoiceNumber || ''}
+                                    disabled
+                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
+                                    placeholder="N/A"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Date</label>
+                                <input
+                                    type="text"
+                                    value={formData.commonDetails?.clientInvoiceDate ? new Date(formData.commonDetails.clientInvoiceDate).toLocaleDateString() : ''}
+                                    disabled
+                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
+                                    placeholder="N/A"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Amount</label>
                                 <div className="relative">
+                                    <span className="absolute left-3 top-2 text-gray-500 text-sm">₹</span>
                                     <input
-                                        type="file"
-                                        id="invoice-upload"
-                                        className="hidden"
-                                        onChange={handleInvoiceUpload}
-                                        accept=".pdf,.doc,.docx,.jpg,.png"
-                                        disabled={uploading}
+                                        type="text"
+                                        value={opportunity.invoiceValue ? opportunity.invoiceValue.toLocaleString() : '0'}
+                                        disabled
+                                        className="w-full border p-2 pl-6 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
                                     />
-                                    <label
-                                        htmlFor="invoice-upload"
-                                        className={`flex items-center px-3 py-2 rounded-lg text-white text-xs font-medium cursor-pointer transition-colors ${uploading ? 'bg-gray-400' : 'bg-brand-blue hover:bg-opacity-90'}`}
-                                    >
-                                        <Upload size={14} className="mr-1" />
-                                        {uploading ? '...' : 'Upload'}
-                                    </label>
                                 </div>
-                            )}
-                            {opportunity.invoiceDocument ? (
-                                <a
-                                    href={`http://localhost:5000/${opportunity.invoiceDocument.replace(/\\/g, '/')}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-600 text-xs font-bold flex items-center hover:underline"
-                                >
-                                    <CheckCircle size={14} className="mr-1" /> View Invoice
-                                </a>
-                            ) : (
-                                <span className="text-xs text-gray-400 italic">No File</span>
-                            )}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Document</label>
+                                <div className="flex items-center space-x-2 h-[38px]">
+                                    {opportunity.invoiceDocument ? (
+                                        <a
+                                            href={`http://localhost:5000/${opportunity.invoiceDocument.replace(/\\/g, '/')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-green-600 text-xs font-bold flex items-center hover:underline"
+                                        >
+                                            <CheckCircle size={14} className="mr-1" /> View Invoice
+                                        </a>
+                                    ) : (
+                                        <span className="text-xs text-gray-400 italic">No File</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* 3. TOV & Client Details */}
+                    {/* 3. Client Details */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Total Order Value (TOV)</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-2 text-gray-500">₹</span>
-                            <input
-                                type="text"
-                                value={formData.commonDetails?.tov ? formData.commonDetails.tov.toLocaleString() : '0'}
-                                disabled
-                                className="w-full border p-2 pl-8 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-                            />
+                        <label className="block text-sm font-bold text-gray-900 mb-3 border-b pb-1">Client Details</label>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Billing Client</label>
+                                <input
+                                    type="text"
+                                    value={formData.commonDetails?.billingClientName || ''}
+                                    onChange={(e) => handleChange('commonDetails', 'billingClientName', e.target.value)}
+                                    disabled={!isEditing}
+                                    className={inputClass}
+                                    placeholder="Enter Billing Client"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">End Client</label>
+                                <input
+                                    type="text"
+                                    value={formData.commonDetails?.endClientName || ''}
+                                    onChange={(e) => handleChange('commonDetails', 'endClientName', e.target.value)}
+                                    disabled={!isEditing}
+                                    className={inputClass}
+                                    placeholder="Enter End Client"
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Billing Client</label>
-                        <input
-                            type="text"
-                            value={formData.commonDetails?.billingClientName || ''}
-                            onChange={(e) => handleChange('commonDetails', 'billingClientName', e.target.value)}
-                            disabled={!isEditing}
-                            className={inputClass}
-                            placeholder="Enter Billing Client"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">End Client</label>
-                        <input
-                            type="text"
-                            value={formData.commonDetails?.endClientName || ''}
-                            onChange={(e) => handleChange('commonDetails', 'endClientName', e.target.value)}
-                            disabled={!isEditing}
-                            className={inputClass}
-                            placeholder="Enter End Client"
-                        />
                     </div>
 
                 </div>

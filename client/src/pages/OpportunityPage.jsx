@@ -218,11 +218,11 @@ const OpportunityPage = () => {
                         <thead className="border-b border-gray-200 bg-gray-50/50">
                             <tr>
                                 <th className="px-6 py-3 font-semibold text-gray-900 text-center">Opp ID</th>
+                                <th className="px-6 py-3 font-semibold text-gray-900 text-center">Client</th>
                                 {isDeliveryRole ? (
                                     <th className="px-6 py-3 font-semibold text-gray-900 text-center">Created By</th>
                                 ) : (
                                     <>
-                                        <th className="px-6 py-3 font-semibold text-gray-900 text-center">Client</th>
                                         <th className="px-6 py-3 font-semibold text-gray-900 text-center">Contact Person</th>
                                         {user?.role === 'Sales Manager' && (
                                             <th className="px-6 py-3 font-semibold text-gray-900 text-center">Created By</th>
@@ -230,8 +230,8 @@ const OpportunityPage = () => {
                                     </>
                                 )}
                                 <th className="px-6 py-3 font-semibold text-gray-900 text-center">Type</th>
+                                <th className="px-6 py-3 font-semibold text-gray-900 text-center">Progress</th>
                                 <th className="px-6 py-3 font-semibold text-gray-900 text-center">Status</th>
-                                <th className="px-6 py-3 font-semibold text-gray-900 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -246,10 +246,54 @@ const OpportunityPage = () => {
                                         contactDetails = opp.client.contactPersons.find(cp => cp.isPrimary) || opp.client.contactPersons[0];
                                     }
 
+                                    // Determine Approval Status Badge
+                                    let statusBadge = null;
+                                    const appStatus = opp.approvalStatus;
+
+                                    if (!appStatus || appStatus === 'Draft' || appStatus === 'No Approval Required' || appStatus === 'Not Required') {
+                                        statusBadge = (
+                                            <span
+                                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 cursor-help"
+                                                title="No approval required. Within approved limits."
+                                            >
+                                                Pre-Approved
+                                            </span>
+                                        );
+                                    } else if (appStatus === 'Approved') {
+                                        statusBadge = (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                                Approved
+                                            </span>
+                                        );
+                                    } else if (appStatus === 'Rejected') {
+                                        statusBadge = (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                Rejected
+                                            </span>
+                                        );
+                                    } else if (['Pending Manager', 'Pending Director', 'Pending'].includes(appStatus) || appStatus?.toLowerCase().includes('pending')) {
+                                        statusBadge = (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                                Pending
+                                            </span>
+                                        );
+                                    } else {
+                                        // Fallback for unknown status
+                                        statusBadge = (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                                {appStatus}
+                                            </span>
+                                        );
+                                    }
+
                                     return (
                                         <tr key={opp._id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate(`/opportunities/${opp._id}`)}>
                                             <td className="px-6 py-4 font-bold text-gray-900 text-center">
                                                 {opp.opportunityNumber}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="font-medium text-gray-900">{opp.client?.companyName || opp.clientName || 'N/A'}</div>
+                                                <div className="text-xs text-gray-500">{opp.client?.sector}</div>
                                             </td>
 
                                             {isDeliveryRole ? (
@@ -258,10 +302,6 @@ const OpportunityPage = () => {
                                                 </td>
                                             ) : (
                                                 <>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <div className="font-medium text-gray-900">{opp.client?.companyName || opp.clientName || 'N/A'}</div>
-                                                        <div className="text-xs text-gray-500">{opp.client?.sector}</div>
-                                                    </td>
                                                     <td className="px-6 py-4 text-center">
                                                         {contactDetails ? (
                                                             <div className="flex flex-col items-center">
@@ -280,6 +320,8 @@ const OpportunityPage = () => {
                                                 </>
                                             )}
                                             <td className="px-6 py-4 text-gray-700 text-center">{opp.type}</td>
+
+                                            {/* Progress Column */}
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex flex-col items-center space-y-1">
                                                     <div className="flex items-center space-x-2">
@@ -291,45 +333,12 @@ const OpportunityPage = () => {
                                                         </div>
                                                         <span className="text-xs font-semibold text-gray-600">{opp.progressPercentage || 0}%</span>
                                                     </div>
-
-                                                    {isDeliveryRole ? (
-                                                        // Manual Status Dropdown for Delivery Team
-                                                        <select
-                                                            value={opp.commonDetails?.status || opp.status || 'Scheduled'}
-                                                            onChange={(e) => handleStatusChange(opp._id, e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className={`text-xs px-2 py-1 rounded-full border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 ${(opp.commonDetails?.status || opp.status) === 'Completed' ? 'bg-green-50 text-green-700' :
-                                                                (opp.commonDetails?.status || opp.status) === 'Cancelled' ? 'bg-red-50 text-red-700' :
-                                                                    'bg-white text-gray-700'
-                                                                }`}
-                                                        >
-                                                            <option value="Scheduled">Scheduled</option>
-                                                            <option value="In Progress">In Progress</option>
-                                                            <option value="Completed">Completed</option>
-                                                            <option value="Cancelled">Cancelled</option>
-                                                            <option value="Discontinued">Discontinued</option>
-                                                        </select>
-                                                    ) : (
-                                                        <span className={`text-xs px-2 py-0.5 rounded-full inline-block w-fit ${opp.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                                                            opp.status === 'Closed' ? 'bg-red-100 text-red-700' :
-                                                                'bg-blue-50 text-brand-blue'
-                                                            }`}>
-                                                            {opp.status}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </td>
+
+                                            {/* Status Column (Approval Status) */}
                                             <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/opportunities/${opp._id}`);
-                                                    }}
-                                                    className="text-primary-blue hover:text-primary-blue-dark inline-flex items-center space-x-1 justify-center"
-                                                >
-                                                    <Eye size={16} />
-                                                    <span>View</span>
-                                                </button>
+                                                {statusBadge}
                                             </td>
                                         </tr>
                                     );

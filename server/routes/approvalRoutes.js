@@ -227,11 +227,11 @@ router.post('/request', protect, authorize('Delivery Team'), async (req, res) =>
 });
 
 // @route   POST /api/approvals/escalate
-// @desc    Escalate opportunity with low GP to Manager (called by Sales Executive)
+// @desc    Escalate opportunity with low GP or Low Contingency to Manager (called by Sales Executive)
 // @access  Private (Sales Executive)
 router.post('/escalate', protect, authorize('Sales Executive'), async (req, res) => {
     try {
-        const { opportunityId, gpPercent, tov, totalExpense } = req.body;
+        const { opportunityId, gpPercent, tov, totalExpense, contingencyPercent, triggerReason } = req.body;
 
         // Verify opportunity ownership
         const opportunity = await Opportunity.findById(opportunityId);
@@ -246,14 +246,22 @@ router.post('/escalate', protect, authorize('Sales Executive'), async (req, res)
         let approvalLevel = 'Manager';
         let assignedTo = null;
         let nextStatus = 'Pending Manager';
+        let approvalReason = 'Low GP';
 
+        // Check Director Condition (Strict checking for GP < 10)
         if (gpPercent < 10) {
             approvalLevel = 'Director';
             nextStatus = 'Pending Director';
+            approvalReason = 'GP < 10%';
             const director = await User.findOne({ role: 'Director' });
             assignedTo = director?._id;
         } else {
-            // Manager Approval (10-15%)
+            // Manager Cases:
+            // 1. GP 10-15%
+            // 2. Contingency < 10%
+            approvalReason = gpPercent < 15 ? 'GP 10-15%' : 'Contingency < 10%';
+
+            // Manager Approval
             const user = await User.findById(req.user._id);
             if (!user.reportingManager) {
                 return res.status(400).json({ message: 'No reporting manager assigned' });
@@ -270,9 +278,10 @@ router.post('/escalate', protect, authorize('Sales Executive'), async (req, res)
             requestedBy: req.user._id,
             snapshot: {
                 totalExpense,
-                tov, // Added for display
-                gktRevenue: tov - totalExpense, // Corrected: GKT Revenue is TOV - Expenses
-                grossProfit: tov - totalExpense
+                tov,
+                gktRevenue: tov - totalExpense,
+                grossProfit: tov - totalExpense,
+                contingencyPercent // Optional: store it
             }
         });
 
@@ -283,16 +292,14 @@ router.post('/escalate', protect, authorize('Sales Executive'), async (req, res)
         opportunity.approvalRequired = true;
         await opportunity.save();
 
-        // Dynamic import if not global
+        // Notification for Approver (Manager or Director)
         const Notification = require('../models/Notification');
-
-        // Create Notification for Approver (Manager or Director)
         await Notification.create({
             recipientId: assignedTo,
             triggeredBy: req.user._id,
             triggeredByName: req.user.name,
             type: 'approval_request',
-            message: `Approval Request: Opportunity ${opportunity.opportunityNumber} by ${req.user.name} (GP: ${gpPercent.toFixed(1)}%)`,
+            message: `Approval Request: Opportunity ${opportunity.opportunityNumber} by ${req.user.name} (${approvalReason}, GP: ${gpPercent.toFixed(1)}%)`,
             opportunityId: opportunity._id,
             opportunityNumber: opportunity.opportunityNumber,
             isRead: false,

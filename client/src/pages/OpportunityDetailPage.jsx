@@ -11,6 +11,7 @@ import SalesTab from '../components/opportunity/tabs/SalesTab';
 import DeliveryTab from '../components/opportunity/tabs/DeliveryTab';
 import ExpensesTab from '../components/opportunity/tabs/ExpensesTab';
 import RevenueTab from '../components/opportunity/tabs/RevenueTab';
+import VendorPayablesTab from '../components/opportunity/tabs/VendorPayablesTab';
 
 const OpportunityDetailPage = () => {
     const { id } = useParams();
@@ -32,9 +33,19 @@ const OpportunityDetailPage = () => {
     const deliveryRef = useRef();
     const expensesRef = useRef();
     const revenueRef = useRef();
+    const vendorPayablesRef = useRef();
 
     // Permissions Helper
-    const canEditSales = user.role === 'Sales Executive' || user.role === 'Sales Manager' || user.role === 'Super Admin';
+    // Permissions Helper
+    const isOwner = opportunity && (opportunity.createdBy?._id === user.id || opportunity.createdBy === user.id);
+
+    let canEditSales = user.role === 'Super Admin';
+    if (user.role === 'Sales Executive') canEditSales = true; // defaulting to true for exec
+    if (user.role === 'Sales Manager') canEditSales = isOwner;
+
+    // Use state-based permission if opportunity is loading? No, if loading returns loading div.
+    // However, canEditSales is currently defined at top level.
+    // I need to replace lines 37-37 entirely.
     const canEditDelivery = user.role === 'Delivery Head' || user.role === 'Delivery Manager' || user.role === 'Delivery Team' || user.role === 'Super Admin';
 
     // Tab Visibility
@@ -45,12 +56,14 @@ const OpportunityDetailPage = () => {
     const showOverviewTab = isAdminOrDirector; // Only Admin/Director can see Overview
     const showSalesTab = !isDeliveryRole || isAdminOrDirector;
     const showDeliveryTab = !isSalesRole || isAdminOrDirector;
+    const showVendorPayablesTab = isDeliveryRole || isAdminOrDirector;
 
     // determine if current tab is editable
     const isCurrentTabEditable = () => {
         if (activeTab === 'sales') return canEditSales;
         if (activeTab === 'delivery') return canEditDelivery;
         if (activeTab === 'expenses') return canEditDelivery || canEditSales;
+        if (activeTab === 'vendor') return canEditDelivery;
         if (activeTab === 'revenue') return canEditSales;
         return false;
     };
@@ -122,6 +135,8 @@ const OpportunityDetailPage = () => {
                 success = await expensesRef.current.handleSave();
             } else if (activeTab === 'revenue' && revenueRef.current) {
                 success = await revenueRef.current.handleSave();
+            } else if (activeTab === 'vendor' && vendorPayablesRef.current) {
+                success = await vendorPayablesRef.current.handleSave();
             }
 
             if (success) {
@@ -144,6 +159,8 @@ const OpportunityDetailPage = () => {
             expensesRef.current.handleCancel();
         } else if (activeTab === 'revenue' && revenueRef.current) {
             revenueRef.current.handleCancel();
+        } else if (activeTab === 'vendor' && vendorPayablesRef.current) {
+            vendorPayablesRef.current.handleCancel();
         }
         setIsEditing(false);
     };
@@ -195,6 +212,16 @@ const OpportunityDetailPage = () => {
                         isEditing={isEditing}
                         refreshData={fetchOpportunity}
                         currency={currency}
+                    />
+                );
+            case 'vendor':
+                return (
+                    <VendorPayablesTab
+                        ref={vendorPayablesRef}
+                        opportunity={opportunity}
+                        canEdit={canEditDelivery}
+                        isEditing={isEditing}
+                        refreshData={fetchOpportunity}
                     />
                 );
             case 'revenue':
@@ -292,6 +319,14 @@ const OpportunityDetailPage = () => {
                         >
                             {['Delivery Team', 'Delivery Head', 'Delivery Manager'].includes(user?.role) ? 'Expenses' : 'Proposal Calculations'}
                         </button>
+                        {showVendorPayablesTab && (
+                            <button
+                                className={`px-6 py-4 text-sm font-medium focus:outline-none transition-all ${activeTab === 'vendor' ? 'bg-white text-blue-700 border-b-2 border-blue-600 font-bold' : 'text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:bg-gray-50'}`}
+                                onClick={() => handleTabChange('vendor')}
+                            >
+                                Vendor Payables
+                            </button>
+                        )}
                         {showSalesTab && (
                             <button
                                 className={`px-6 py-4 text-sm font-medium focus:outline-none transition-all ${activeTab === 'revenue' ? 'bg-white text-blue-700 border-b-2 border-blue-600 font-bold' : 'text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:bg-gray-50'}`}

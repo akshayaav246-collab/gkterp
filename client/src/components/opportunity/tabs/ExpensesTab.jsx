@@ -4,6 +4,7 @@ import { Upload, Paperclip, Trash2, DollarSign, TrendingUp, Clock, FileText, Eye
 import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
 import { useAuth } from '../../../context/AuthContext';
+import AlertModal from '../../ui/AlertModal';
 
 const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, currency = 'INR' }, ref) => {
     const { addToast } = useToast();
@@ -11,6 +12,15 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
     const [uploading, setUploading] = useState(null);
     const [escalating, setEscalating] = useState(false);
     const [formData, setFormData] = useState({});
+
+    // Modal State
+    const [alertConfig, setAlertConfig] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: null
+    });
 
     // Currency Constants
     const CONVERSION_RATE = currency === 'USD' ? 84 : 1;
@@ -77,16 +87,10 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
     };
 
     // Handle Escalation (Push to Manager)
-    const handleEscalate = async () => {
-        // Confirmation alert removed as per user request
-
+    const handleEscalate = async (triggerType = 'gp', overrides = {}) => {
         setEscalating(true);
         try {
             const token = localStorage.getItem('token');
-            // Calculate current values
-            // Use activeData equivalent logic but since we are inside function we need access to it.
-            // We can recalculate or use formData/opportunity. 
-            // Better to recalculate safely.
             const data = isEditing ? formData : opportunity;
             const expenseTypes = [
                 { key: 'trainerCost' }, { key: 'vouchersCost' }, { key: 'marketing' }, { key: 'contingency' },
@@ -98,24 +102,100 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
             const currentTotalExpenses = expenseTypes.reduce((sum, type) => sum + (Number(data.expenses?.[type.key]) || 0), 0);
             const currentGpPercent = currentTov > 0 ? ((currentTov - currentTotalExpenses) / currentTov) * 100 : 0;
 
-            await axios.post(
-                `http://localhost:5000/api/approvals/escalate`,
+            // Allow overrides for values that act as triggers (ensure we send the Triggered Value)
+            const params = {
+                gpPercent: overrides.gpPercent ?? currentGpPercent,
+                contingencyPercent: overrides.contingencyPercent ?? (data.expenses?.contingencyPercent || 20),
+                tov: currentTov,
+                totalExpense: currentTotalExpenses,
+                triggerReason: triggerType
+            };
+
+            // API 1: Save Opportunity Changes
+            await axios.put(
+                `http://localhost:5000/api/opportunities/${opportunity._id}`,
                 {
-                    opportunityId: opportunity._id,
-                    gpPercent: currentGpPercent,
-                    tov: currentTov,
-                    totalExpense: currentTotalExpenses
+                    expenses: { ...data.expenses, ...overrides },
+                    commonDetails: data.commonDetails
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            addToast('Approval request sent to Manager!', 'success');
-            await refreshData(); // Force immediate refresh to show updated status
+            // API 2: Trigger Escalation
+            await axios.post(
+                `http://localhost:5000/api/approvals/escalate`,
+                {
+                    opportunityId: opportunity._id,
+                    ...params
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Determine message
+            let msg = 'Approval request sent to Manager!';
+            if (triggerType === 'gp' && params.gpPercent < 10) msg = 'Approval request sent to Director!';
+
+            addToast(msg, 'success');
+            await refreshData();
         } catch (error) {
             console.error('Escalation failed', error);
             addToast(error.response?.data?.message || 'Failed to send approval request', 'error');
         } finally {
             setEscalating(false);
+            setAlertConfig(prev => ({ ...prev, isOpen: false }));
+        }
+    };
+
+    const confirmAction = (title, message, onConfirm, type = 'info') => {
+        setAlertConfig({
+            isOpen: true,
+            title,
+            message,
+            onConfirm,
+            type
+        });
+    };
+
+    const handleGpChange = (value) => {
+        // Immediate State Update for UI responsiveness
+        handleChange('expenses', 'targetGpPercent', value);
+
+        // Validation Logic
+        if (value >= 15) {
+            // No approval needed
+        } else if (value >= 10 && value < 15) {
+            confirmAction(
+                "Manager Approval Required",
+                "GP Margin is between 10-15%. This requires Manager approval. Do you want to proceed?",
+                // On Confirm: Escalate
+                () => handleEscalate('gp', { targetGpPercent: value }),
+                'info'
+            );
+        } else if (value < 10) {
+            confirmAction(
+                "Director Approval Required",
+                "GP Margin is below 10%. This requires Director approval. Do you want to proceed?",
+                // On Confirm: Escalate
+                () => handleEscalate('gp', { targetGpPercent: value }),
+                'warning'
+            );
+        }
+    };
+
+    const handleContingencyChange = (value) => {
+        // Immediate Update
+        handleChange('expenses', 'contingencyPercent', value);
+
+        if (value >= 10) {
+            // No approval
+        } else if (value < 10) {
+            confirmAction(
+                "Manager Approval Required",
+                "Contingency is below 10%. This requires Manager approval. Do you want to proceed?",
+                // On Confirm: Escalate
+                () => handleEscalate('contingency', { contingencyPercent: value }),
+                'warning'
+            );
         }
     };
 
@@ -177,13 +257,76 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
                 const token = localStorage.getItem('token');
 
                 // Sanitize commonDetails (only need specific fields but sending whole obj is fine if carefully handled)
-                // We specifically care about tov, tovRate, tovUnit here.
                 const sanitizedCommonDetails = { ...formData.commonDetails };
 
-                // Payload includes expenses and commonDetails (for TOV)
+                // --- AUTO-FILL VENDOR PAYABLES FROM EXPENSES ---
+                const expenses = formData.expenses || {};
+
+                // Helper to get currency value (parse if string)
+                const getVal = (key) => {
+                    const val = expenses[key];
+                    if (typeof val === 'string') return parseFloat(val.replace(/,/g, '')) || 0;
+                    return parseFloat(val) || 0;
+                };
+
+                // Clone existing financeDetails to preserve other data (like clientReceivables)
+                const existingFinance = opportunity.financeDetails || {};
+                const financeDetails = JSON.parse(JSON.stringify(existingFinance));
+                if (!financeDetails.vendorPayables) financeDetails.vendorPayables = {};
+                if (!financeDetails.vendorPayables.detailed) financeDetails.vendorPayables.detailed = {};
+
+                const vp = financeDetails.vendorPayables;
+                const detailed = vp.detailed;
+
+                // Helper for Tax Calculation
+                const updateCategory = (catKey, expenseVal) => {
+                    if (!detailed[catKey]) detailed[catKey] = {};
+                    const cat = detailed[catKey];
+
+                    cat.invoiceValue = expenseVal; // Auto-fill Invoice Value (Without Tax)
+
+                    // Recalculate based on existing Tax/TDS settings
+                    const gstType = cat.gstType || '';
+                    let gstRate = 0;
+                    if (gstType.includes('18%')) gstRate = 18;
+                    else if (gstType.includes('9%')) gstRate = 9; // Simple check for calc
+
+                    const gstAmount = (expenseVal * gstRate) / 100;
+                    const invoiceValueWithTax = expenseVal + gstAmount;
+
+                    const tdsPercent = parseFloat(cat.tdsPercent) || 0;
+                    const tdsAmount = (expenseVal * tdsPercent) / 100; // TDS on Base Value
+
+                    cat.gstAmount = gstAmount;
+                    cat.invoiceValueWithTax = invoiceValueWithTax;
+                    cat.tdsAmount = tdsAmount;
+                    cat.finalPayable = invoiceValueWithTax - tdsAmount;
+                };
+
+                // Perform Mappings
+                updateCategory('trainer', getVal('trainerCost'));
+                updateCategory('royalty', getVal('gkRoyalty'));
+                updateCategory('courseMaterials', getVal('material'));
+                updateCategory('lab', getVal('labs'));
+                updateCategory('venue', getVal('venue'));
+                updateCategory('travel', getVal('travel'));
+                updateCategory('accommodation', getVal('accommodation'));
+
+                // Marketing: Use calculated amount from Expense Breakdown
+                updateCategory('marketing', getVal('marketing'));
+
+                // Simple Fields
+                if (!vp.perDiem) vp.perDiem = {};
+                vp.perDiem.amount = getVal('perDiem');
+
+                if (!vp.other) vp.other = {};
+                vp.other.amount = getVal('localConveyance'); // Local Conveyance -> Other Expenses
+
+                // Payload includes expenses, commonDetails AND financeDetails
                 const payload = {
                     expenses: formData.expenses,
-                    commonDetails: sanitizedCommonDetails
+                    commonDetails: sanitizedCommonDetails,
+                    financeDetails: financeDetails
                 };
 
                 await axios.put(
@@ -192,7 +335,7 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
 
-                addToast('Financial details saved successfully', 'success');
+                addToast('Financial details saved and synced to Vendor Payables', 'success');
                 refreshData();
                 return true;
             } catch (error) {
@@ -340,11 +483,32 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
                         <div className="bg-green-50 p-6 rounded-xl border border-green-200 mb-6">
                             <div className="space-y-3">
                                 {/* Big Calculated Value */}
-                                <div className="text-center">
+                                <div className="text-center relative">
                                     <label className="block text-xs font-bold text-green-700 uppercase tracking-wide mb-1">Proposal Value</label>
                                     <div className="text-4xl font-extrabold text-green-700">
                                         {CURRENCY_SYMBOL} {((formData.commonDetails?.tov || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                     </div>
+
+                                    {/* Status Badge */}
+                                    {opportunity.approvalStatus && opportunity.approvalStatus !== 'Draft' && (
+                                        <div className="mt-2">
+                                            {(['Pending Manager', 'Pending Director', 'Pending'].includes(opportunity.approvalStatus) || opportunity.approvalStatus.toLowerCase().includes('pending')) && (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                                    Waiting for approval
+                                                </span>
+                                            )}
+                                            {opportunity.approvalStatus === 'Approved' && (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                                    Approved
+                                                </span>
+                                            )}
+                                            {opportunity.approvalStatus === 'Rejected' && (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                    Rejected
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Breakdown */}
@@ -364,31 +528,31 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
                         <div className="space-y-4 flex-grow">
                             {/* Calculation Controls */}
                             <div className="grid grid-cols-1 gap-4">
-                                {/* GP Margin */}
+                                {/* GP Margin - Dropdown 1-30% */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">GP Margin (%)</label>
                                     <select
                                         value={formData.expenses?.targetGpPercent ?? 30}
-                                        onChange={(e) => handleChange('expenses', 'targetGpPercent', parseFloat(e.target.value))}
+                                        onChange={(e) => handleGpChange(parseFloat(e.target.value))}
                                         disabled={!canEditExecution}
                                         className={`w-full border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-brand-blue'}`}
                                     >
-                                        {Array.from({ length: 16 }, (_, i) => 15 + i).map(p => (
+                                        {Array.from({ length: 30 }, (_, i) => i + 1).map(p => (
                                             <option key={p} value={p}>{p}%</option>
                                         ))}
                                     </select>
                                 </div>
 
-                                {/* Contingency */}
+                                {/* Contingency - Dropdown 1-20% */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Contingency (%)</label>
                                     <select
                                         value={formData.expenses?.contingencyPercent ?? 20}
-                                        onChange={(e) => handleChange('expenses', 'contingencyPercent', parseFloat(e.target.value))}
+                                        onChange={(e) => handleContingencyChange(parseFloat(e.target.value))}
                                         disabled={!canEditExecution}
                                         className={`w-full border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
                                     >
-                                        {Array.from({ length: 11 }, (_, i) => 10 + i).map(p => (
+                                        {Array.from({ length: 20 }, (_, i) => i + 1).map(p => (
                                             <option key={p} value={p}>{p}%</option>
                                         ))}
                                     </select>
@@ -517,6 +681,16 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, 
                 </div>
 
             </div>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onConfirm={alertConfig.onConfirm}
+                type={alertConfig.type}
+                confirmText="Send for Approval"
+            />
         </div>
     );
 });
