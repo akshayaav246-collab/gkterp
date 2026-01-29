@@ -40,6 +40,28 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
     // Initialize formData when opportunity changes or edit mode starts
     useEffect(() => {
         if (opportunity) {
+            // Smart Logic for Days and Pax
+            let initialDays = opportunity.days;
+            if (opportunity.typeSpecificDetails?.duration) {
+                const durationStr = opportunity.typeSpecificDetails.duration.toLowerCase();
+                const match = durationStr.match(/(\d+)/);
+                if (match) {
+                    const num = parseInt(match[0]);
+                    if (durationStr.includes('month')) {
+                        const calculatedDays = num * 30;
+                        // If stored days is exactly the number of months (e.g. 3) or 0, assume it was wrongly parsed or init, so fix it.
+                        if (!initialDays || initialDays === num) {
+                            initialDays = calculatedDays;
+                        }
+                    }
+                }
+            }
+
+            let initialPax = opportunity.participants;
+            if (opportunity.type === 'Lab Support' && opportunity.typeSpecificDetails?.numberOfIDs) {
+                initialPax = opportunity.typeSpecificDetails.numberOfIDs;
+            }
+
             setFormData({
                 ...opportunity,
                 // Ensure nested objects are handled correctly
@@ -50,7 +72,9 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                 expenses: { ...opportunity.expenses },
                 // Handle populated fields by taking _id if object, else value
                 // selectedVendor removed
-                selectedSME: typeof opportunity.selectedSME === 'object' ? opportunity.selectedSME?._id : opportunity.selectedSME
+                selectedSME: typeof opportunity.selectedSME === 'object' ? opportunity.selectedSME?._id : opportunity.selectedSME,
+                days: initialDays,
+                participants: initialPax
             });
         }
     }, [opportunity]);
@@ -64,7 +88,9 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                     expenses: formData.expenses,
                     commonDetails: formData.commonDetails,
                     // selectedVendor removed
-                    selectedSME: formData.selectedSME
+                    selectedSME: formData.selectedSME,
+                    days: formData.days,
+                    participants: formData.participants
                 };
 
                 await axios.put(
@@ -216,7 +242,7 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
                         <input
                             type="text"
-                            value={opportunity.technology || 'N/A'}
+                            value={opportunity.typeSpecificDetails?.technology || 'N/A'}
                             disabled
                             className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
                             placeholder="Technology from Opportunity"
