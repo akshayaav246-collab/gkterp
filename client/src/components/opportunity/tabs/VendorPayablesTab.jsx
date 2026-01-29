@@ -258,6 +258,7 @@ const VendorPayablesTab = forwardRef(({ opportunity, canEdit, refreshData }, ref
                     inputClass={inputClass}
                     readOnlyClass={readOnlyClass}
                     canEdit={canEdit}
+                    currency={currency}
                 />
             ))}
 
@@ -340,7 +341,8 @@ const ExpenseRow = ({
     uploading,
     inputClass,
     readOnlyClass,
-    canEdit
+    canEdit,
+    currency
 }) => {
     const data = vendorData.detailed[category];
     const isExpanded = expandedCategories[category];

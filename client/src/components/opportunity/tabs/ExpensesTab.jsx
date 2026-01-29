@@ -208,8 +208,8 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
     const isDelivery = ['Delivery Team', 'Delivery Head', 'Delivery Manager'].includes(user?.role);
     const isAdmin = ['Super Admin', 'Director'].includes(user?.role);
 
-    // Execution Details (TOV, Marketing, Contingency): Editable by Sales, Delivery, Admin
-    const canEditExecution = isEditing && (isSales || isDelivery || isAdmin);
+    // Execution Details (TOV, Marketing, Contingency): Editable by Sales, Admin (NOT Delivery)
+    const canEditExecution = isEditing && (isSales || isAdmin);
 
     // Operational Expenses Breakdown: Editable by Delivery, Admin (NOT Sales)
     const canEditOpExpenses = isEditing && (isDelivery || isAdmin);
