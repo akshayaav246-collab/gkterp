@@ -165,7 +165,7 @@ const OpportunityPage = () => {
                                     <option value="Lab Support">Lab Support</option>
                                     <option value="Resource Support">Resource Support</option>
                                     <option value="Content Development">Content Development</option>
-                                    <option value="Project Support">Project Support</option>
+                                    <option value="Product Support">Product Support</option>
                                 </select>
                             </div>
                             <div className="relative">

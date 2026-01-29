@@ -49,7 +49,7 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
         contentType: '',
         deliveryFormat: '',
 
-        // Project Support fields
+        // Product Support fields
         projectScope: '',
         teamSize: ''
     });
@@ -128,7 +128,7 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                     contentType: formData.contentType,
                     deliveryFormat: formData.deliveryFormat
                 };
-            } else if (formData.type === 'Project Support') {
+            } else if (formData.type === 'Product Support') {
                 typeSpecificDetails = {
                     projectScope: formData.projectScope,
                     teamSize: parseInt(formData.teamSize) || 0
@@ -252,11 +252,11 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                         required
                                     >
                                         <option value="Training">Training</option>
-                                        <option value="Vouchers">Vouchers</option>
-                                        <option value="Lab Support">Lab Support</option>
+                                        <option value="Product Support">Product Support</option>
                                         <option value="Resource Support">Resource Support</option>
+                                        <option value="Vouchers">Vouchers</option>
                                         <option value="Content Development">Content Development</option>
-                                        <option value="Project Support">Project Support</option>
+                                        <option value="Lab Support">Lab Support</option>
                                     </select>
                                 </div>
                             </div>
@@ -273,7 +273,7 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
                                         <select name="technology" value={formData.technology} onChange={handleChange} className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" required>
                                             <option value="">Select Technology</option>
-                                            {TECHNOLOGIES.map(tech => (
+                                            {TECHNOLOGIES.filter(t => t !== 'Select Technology').map(tech => (
                                                 <option key={tech} value={tech}>{tech}</option>
                                             ))}
                                         </select>
@@ -389,8 +389,8 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                 </div>
                             )}
 
-                            {/* Project Support Fields */}
-                            {formData.type === 'Project Support' && (
+                            {/* Product Support Fields */}
+                            {formData.type === 'Product Support' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Project Scope *</label>

@@ -337,7 +337,7 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
 
-                addToast('Financial details saved and synced to Vendor Payables', 'success');
+                addToast('Expenses saved successfully', 'success');
                 refreshData();
                 return true;
             } catch (error) {
