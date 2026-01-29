@@ -29,7 +29,7 @@ const StyledWrapper = styled.div`
     position: relative;
     overflow: hidden;
     transition-duration: 0.3s;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+    box-shadow: 2px 2px 10px rgba(5, 23, 102, 0.51);
     background-color: white;
   }
 
@@ -62,7 +62,7 @@ const StyledWrapper = styled.div`
   }
   /* hover effect on button width - ONLY WHEN NOT COLLAPSED */
   .Btn:hover {
-    background-color: black;
+    background-color: rgba(255, 255, 255, 0.2);
     width: ${props => props.$isCollapsed ? '45px' : '125px'};
     border-radius: ${props => props.$isCollapsed ? '50%' : '40px'};
     transition-duration: 0.3s;

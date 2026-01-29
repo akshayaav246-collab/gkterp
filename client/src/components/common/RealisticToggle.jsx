@@ -65,7 +65,7 @@ const RealisticToggle = ({ checked, onChange }) => {
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: #444;
+            color: #140707ef;
             font-size: 12px; /* Reduced from 14px */
             
             height: 22px; /* Reduced from 30px */
