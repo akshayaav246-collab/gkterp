@@ -29,10 +29,10 @@ const RealisticToggle = ({ checked, onChange }) => {
         }
 
         .realistic-toggle-wrapper .label {
-            height: 40px; /* Scaled down slightly from 60px for dashboard fit */
-            width: 80px;  /* Scaled down slightly from 120px */
+            height: 30px; /* Reduced from 40px */
+            width: 60px;  /* Reduced from 80px */
             background-color: #ffffff;
-            border-radius: 20px;
+            border-radius: 15px; /* Reduced from 20px */
             box-shadow: 
                 inset 0 0 5px 4px rgba(255, 255, 255, 1),
                 inset 0 0 10px 1px rgba(0, 0, 0, 0.488), 
@@ -66,10 +66,10 @@ const RealisticToggle = ({ checked, onChange }) => {
             justify-content: center;
             font-weight: bold;
             color: #444;
-            font-size: 14px;
+            font-size: 12px; /* Reduced from 14px */
             
-            height: 30px; /* Scaled down from 40px */
-            width: 30px;
+            height: 22px; /* Reduced from 30px */
+            width: 22px;  /* Reduced from 30px */
             border-radius: 50%;
             background-color: #000000;
             background-image: linear-gradient(
@@ -78,21 +78,21 @@ const RealisticToggle = ({ checked, onChange }) => {
                 #ffffff 11%,
                 #726f6f 62%
             );
-            left: 5px; /* Adjust for padding */
+            left: 4px; /* Adjust for padding */
             box-shadow: 0 2px 1px rgba(0, 0, 0, 0.3), 5px 5px 5px rgba(0, 0, 0, 0.3);
             transition: 0.4s;
         }
 
         /* Checked State (Knob Move) */
         .realistic-toggle-wrapper #currency-checkbox:checked ~ .label::before {
-            left: 45px; /* Calculated: width(80) - knob(30) - padding(5) */
+            left: 34px; /* Calculated: width(60) - knob(22) - padding(4) = 34 */
             content: "$"; /* Checked = USD */
             color: #fff;
             background-color: #000000;
             background-image: linear-gradient(315deg, #000000 0%, #414141 70%);
         }
       `}</style>
-        </div>
+        </div >
     );
 };
 
