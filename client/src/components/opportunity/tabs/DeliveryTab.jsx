@@ -104,7 +104,8 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                 return true;
             } catch (error) {
                 console.error('Save failed', error);
-                addToast('Failed to save changes', 'error');
+                const errorMessage = error.response?.data?.message || error.message || 'Failed to save changes';
+                addToast(errorMessage, 'error');
                 return false;
             }
         },
@@ -160,7 +161,8 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
             refreshData();
         } catch (error) {
             console.error('Upload failed', error);
-            addToast('Failed to upload invoice', 'error');
+            const errorMessage = error.response?.data?.message || 'Failed to upload invoice';
+            addToast(errorMessage, 'error');
         } finally {
             setUploading(false);
         }
@@ -187,7 +189,8 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
             refreshData();
         } catch (error) {
             console.error('Upload failed', error);
-            addToast(`Failed to upload ${type}`, 'error');
+            const errorMessage = error.response?.data?.message || `Failed to upload ${type}`;
+            addToast(errorMessage, 'error');
         } finally {
             setUploading(false);
         }

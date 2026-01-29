@@ -59,7 +59,7 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
                 return true;
             } catch (error) {
                 console.error('Error saving revenue details:', error);
-                addToast('Failed to save details', 'error');
+                addToast(`Failed to save details: ${error.response?.data?.message || error.message}`, 'error');
                 return false;
             }
         },
@@ -94,6 +94,9 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
             const specificTypFormData = new FormData();
             if (type === 'po') {
                 specificTypFormData.append('po', file);
+                // Append required fields for PO upload
+                if (formData.poValue) specificTypFormData.append('poValue', formData.poValue);
+                if (formData.poDate) specificTypFormData.append('poDate', formData.poDate);
             } else {
                 specificTypFormData.append('invoice', file);
             }

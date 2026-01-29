@@ -310,7 +310,7 @@ const OpportunityDetailPage = () => {
                                 className={`px-6 py-4 text-sm font-medium focus:outline-none transition-all ${activeTab === 'delivery' ? 'bg-white text-blue-700 border-b-2 border-blue-600 font-bold' : 'text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:bg-gray-50'}`}
                                 onClick={() => handleTabChange('delivery')}
                             >
-                                Delivery
+                                Requirements
                             </button>
                         )}
                         <button

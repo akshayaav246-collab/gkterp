@@ -39,6 +39,14 @@ const NotificationSchema = new mongoose.Schema({
         period: String,
         year: Number
     },
+    changes: {
+        type: mongoose.Schema.Types.Mixed, // Can be array or object describing field changes
+        default: null
+    },
+    targetTab: {
+        type: String, // 'requirements', 'expenses', 'revenue', etc.
+        default: null
+    },
     isRead: {
         type: Boolean,
         default: false

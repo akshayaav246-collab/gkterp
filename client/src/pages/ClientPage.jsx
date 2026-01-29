@@ -65,7 +65,8 @@ const ClientPage = () => {
             });
             setClients(res.data);
         } catch (err) {
-            console.error(err);
+            console.error('Error fetching clients:', err);
+            addToast('Failed to load clients. Please try again.', 'error');
         }
     };
 

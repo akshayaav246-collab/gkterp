@@ -334,8 +334,9 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
                                     cy="50%"
                                     innerRadius={70}
                                     outerRadius={100}
-                                    paddingAngle={5}
+                                    paddingAngle={0}
                                     dataKey="value"
+                                    stroke="none"
                                 >
                                     {filteredData.typeData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

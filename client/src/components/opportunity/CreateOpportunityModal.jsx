@@ -70,6 +70,7 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
             setLoading(false);
         } catch (err) {
             console.error('Error fetching clients:', err);
+            addToast('Failed to load clients. Please reload.', 'error');
             setLoading(false);
         }
     };

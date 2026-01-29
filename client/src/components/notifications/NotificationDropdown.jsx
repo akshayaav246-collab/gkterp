@@ -92,12 +92,13 @@ const NotificationDropdown = () => {
                 navigate('/approvals');
             }
         } else if (notification.type === 'approval_granted' || notification.type === 'approval_rejected') {
-            // New types added
             if (notification.opportunityId) {
                 navigate(`/opportunities/${notification.opportunityId}`, { state: { activeTab: 'expenses' } });
             }
         } else if (notification.opportunityId) {
-            navigate(`/opportunities/${notification.opportunityId}`);
+            // Support specific tab navigation
+            const state = notification.targetTab ? { activeTab: notification.targetTab } : {};
+            navigate(`/opportunities/${notification.opportunityId}`, { state });
         } else {
             navigate('/dashboard');
         }
@@ -163,32 +164,12 @@ const NotificationDropdown = () => {
                         ) : (
                             <div className="divide-y divide-gray-100">
                                 {notifications.map((notification) => (
-                                    <div
+                                    <NotificationItem
                                         key={notification._id}
-                                        onClick={() => handleNotificationClick(notification)}
-                                        className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors flex items-start space-x-3 ${!notification.isRead ? 'bg-blue-50' : ''}`}
-                                    >
-                                        <div className={`p-2 rounded-full flex-shrink-0 ${!notification.isRead ? 'bg-white' : 'bg-gray-100'}`}>
-                                            {getIcon(notification.type)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className={`text-sm ${!notification.isRead ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
-                                                {notification.message}
-                                            </p>
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                {formatTime(notification.createdAt)}
-                                            </p>
-                                        </div>
-                                        {!notification.isRead && (
-                                            <button
-                                                onClick={(e) => handleMarkAsRead(notification._id, e)}
-                                                className="text-gray-400 hover:text-brand-blue"
-                                                title="Mark as read"
-                                            >
-                                                <div className="h-2 w-2 rounded-full bg-brand-blue"></div>
-                                            </button>
-                                        )}
-                                    </div>
+                                        notification={notification}
+                                        onRead={handleMarkAsRead}
+                                        onNavigate={handleNotificationClick}
+                                    />
                                 ))}
                             </div>
                         )}
@@ -198,5 +179,108 @@ const NotificationDropdown = () => {
         </div>
     );
 };
+
+// Sub-component for individual notification item to manage expand state
+const NotificationItem = ({ notification, onRead, onNavigate }) => {
+    const [expanded, setExpanded] = useState(false);
+    const hasChanges = notification.changes && Object.keys(notification.changes).length > 0;
+
+    const handleExpand = (e) => {
+        e.stopPropagation();
+        setExpanded(!expanded);
+    };
+
+
+
+    const formatFieldName = (field) => {
+        return field
+            .replace(/([A-Z])/g, ' $1') // Space before capital letters
+            .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+            .replace('Common Details.', '')
+            .replace('Type Specific Details.', '');
+    };
+
+    const getIcon = (type) => {
+        switch (type) {
+            case 'expense_edit':
+                return <DollarSign size={16} className="text-yellow-600" />;
+            case 'opportunity_created':
+                return <Briefcase size={16} className="text-blue-600" />;
+            case 'document_upload':
+                return <FileText size={16} className="text-green-600" />;
+            default:
+                return <Bell size={16} className="text-gray-600" />;
+        }
+    };
+
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    };
+
+    return (
+        <div
+            onClick={() => onNavigate(notification)}
+            className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-0 ${!notification.isRead ? 'bg-blue-50' : ''}`}
+        >
+            <div className="flex items-start space-x-3">
+                <div className={`p-2 rounded-full flex-shrink-0 ${!notification.isRead ? 'bg-white' : 'bg-gray-100'}`}>
+                    {getIcon(notification.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className={`text-sm ${!notification.isRead ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
+                        {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1 mb-2">
+                        {formatTime(notification.createdAt)}
+                    </p>
+
+                    {/* Actions Row */}
+                    {hasChanges && (
+                        <div className="flex items-center gap-3 mt-1">
+                            {/* Preview Toggle (if changes exist) */}
+                            <button
+                                onClick={handleExpand}
+                                className="text-xs font-medium text-gray-500 hover:text-gray-800 underline decoration-dotted"
+                            >
+                                {expanded ? 'Hide Changes' : 'Preview Changes'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Changes Preview Panel */}
+                    {expanded && hasChanges && (
+                        <div className="mt-2 text-xs bg-gray-100 p-2 rounded border border-gray-200" onClick={(e) => e.stopPropagation()}>
+                            <p className="font-semibold text-gray-500 mb-1">Updated Fields:</p>
+                            <ul className="list-disc list-inside space-y-0.5 text-gray-700">
+                                {Object.entries(notification.changes).map(([key, value]) => (
+                                    <li key={key} className="truncate">
+                                        <span className="font-medium">{formatFieldName(key)}:</span> {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+                {!notification.isRead && (
+                    <button
+                        onClick={(e) => onRead(notification._id, e)}
+                        className="text-gray-400 hover:text-brand-blue"
+                        title="Mark as read"
+                    >
+                        <div className="h-2 w-2 rounded-full bg-brand-blue"></div>
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 export default NotificationDropdown;

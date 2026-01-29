@@ -18,6 +18,9 @@ const DeliveryDashboard = () => {
         salesChart: [], vendorChart: [], avgGpChart: []
     });
 
+    const [currency, setCurrency] = useState('INR'); // 'INR' or 'USD'
+    const EXCHANGE_RATE = 85;
+
     useEffect(() => {
         updateUserRole('Delivery Team');
         fetchDashboardRevamp();
@@ -38,6 +41,17 @@ const DeliveryDashboard = () => {
         }
     };
 
+    // Helper to format money based on selected currency
+    const formatMoney = (amountInINR) => {
+        if (amountInINR === undefined || amountInINR === null) return '0';
+        if (currency === 'INR') {
+            return `₹${amountInINR.toLocaleString('en-IN')}`;
+        } else {
+            const amountInUSD = amountInINR / EXCHANGE_RATE;
+            return `$${amountInUSD.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+        }
+    };
+
     if (loading) return (
         <div className="flex justify-center items-center min-h-screen bg-bg-page">
             <div className="text-primary-blue font-semibold">Loading Analytics...</div>
@@ -52,11 +66,38 @@ const DeliveryDashboard = () => {
         { title: 'Pending Feedback', value: stats.pendingFeedback, icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-100', sub: 'Completed but no doc' },
     ];
 
+    // Filter/Convert vendor chart data based on currency
+    const vendorChartData = charts.vendorChart.map(item => ({
+        ...item,
+        value: currency === 'INR' ? item.value : (item.value / EXCHANGE_RATE)
+    }));
+
     return (
         <div className="p-6 bg-bg-page min-h-screen space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-primary-blue">Welcome, {user?.name || 'User'}</h1>
-                <button onClick={fetchDashboardRevamp} className="text-sm text-primary-blue hover:underline">Refresh Data</button>
+
+                {/* Currency Toggle */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex items-center">
+                    <button
+                        onClick={() => setCurrency('INR')}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${currency === 'INR'
+                            ? 'bg-primary-blue text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900'
+                            }`}
+                    >
+                        INR (₹)
+                    </button>
+                    <button
+                        onClick={() => setCurrency('USD')}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${currency === 'USD'
+                            ? 'bg-primary-blue text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-900'
+                            }`}
+                    >
+                        USD ($)
+                    </button>
+                </div>
             </div>
 
             {/* KPI Grid */}
@@ -102,12 +143,12 @@ const DeliveryDashboard = () => {
                     <h3 className="text-lg font-bold text-gray-800 mb-4">Top 5 Vendors (by Spend)</h3>
                     <div className="flex-1 w-full min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart layout="vertical" data={charts.vendorChart} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                            <BarChart layout="vertical" data={vendorChartData} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
                                 <XAxis type="number" hide />
                                 <YAxis type="category" dataKey="name" width={100} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#374151' }} />
                                 <Tooltip
-                                    formatter={(value) => [`₹${value.toLocaleString()}`, 'Spend']}
+                                    formatter={(value) => [formatMoney(value), 'Spend']}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                                 />
                                 <Bar dataKey="value" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />

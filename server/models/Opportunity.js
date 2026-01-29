@@ -493,7 +493,8 @@ OpportunitySchema.methods.canEdit = function (fieldPath, userRole) {
         'expenses',
         'commonDetails',
         'selectedVendor', 'selectedSME',
-        'financeDetails' // ALLOW DELIVERY TO EDIT FINANCE (Generalized to fix full object update issue)
+        'financeDetails', // ALLOW DELIVERY TO EDIT FINANCE (Generalized to fix full object update issue)
+        'days', 'participants' // Added permissions for Delivery Team
     ];
 
     // Finance can edit: Finance Details (Client & Vendor) + Common Details (Payment Terms etc)
