@@ -110,6 +110,10 @@ const ClientPage = () => {
         }
     };
 
+
+
+    // ...
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -153,7 +157,7 @@ const ClientPage = () => {
             const token = localStorage.getItem('token');
             let res;
 
-            if (viewMode === 'edit' && selectedClient) {
+            if (selectedClient && selectedClient._id) {
                 // Update existing client
                 res = await axios.put(`http://localhost:5000/api/clients/${selectedClient._id}`, formData, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -174,19 +178,20 @@ const ClientPage = () => {
             fetchClients();
             // If editing, we might want to refresh the selectedClient details too if in details view
             if (viewMode === 'details' && selectedClient) {
-                // Re-fetch specific client or just update local state if we want to be fast
-                // For simplicity, let's just update the list for now. 
-                // To update details view, we'd need to fetch the single client again or update selectedClient with res.data
+                // To update details view, we update the selectedClient with the response data
                 setSelectedClient(res.data);
             }
 
         } catch (err) {
-            console.error('Error saving client:', err);
+            console.error('Error saving client:', err.message); // Clean error log
             const errorMessage = err.response?.data?.message || err.message;
             addToast(`Error saving client: ${errorMessage}`, 'error');
-            console.log('Validation Error Details:', err.response?.data);
         }
     };
+
+    // ...
+
+    // Content Switcher
 
     const resetForm = () => {
         setFormData({
@@ -211,9 +216,8 @@ const ClientPage = () => {
     // --- Navigation Handlers ---
     const startCreate = () => {
         resetForm();
-        // Ensure we are in list view ideally, but popup can work over details too
+        setSelectedClient(null); // Explicitly clear selected client
         setShowFormModal(true);
-        // viewMode remains as is (likely 'list')
         if (viewMode !== 'list' && viewMode !== 'details') {
             setViewMode('list');
         }
@@ -404,7 +408,7 @@ const ClientPage = () => {
 
                         <div className="flex space-x-4 pt-4 border-t sticky bottom-0 bg-white">
                             <button type="submit" className="bg-brand-blue text-white px-6 py-2 rounded-lg hover:bg-opacity-90 flex-1 md:flex-none">
-                                {viewMode === 'edit' ? 'Update Client' : 'Create Client'}
+                                {selectedClient ? 'Update Client' : 'Create Client'}
                             </button>
                             <button type="button" onClick={() => setShowFormModal(false)} className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 flex-1 md:flex-none">
                                 Cancel
@@ -603,7 +607,7 @@ const ClientPage = () => {
 
             {/* Content Switcher */}
             {/* Modal for Create/Edit */}
-            {showFormModal && renderForm(viewMode === 'edit' ? 'Edit Client' : 'Add New Client')}
+            {showFormModal && renderForm(selectedClient ? 'Update Client' : 'Add New Client')}
 
             {/* Details View */}
             {viewMode === 'details' && selectedClient && renderDetails()}

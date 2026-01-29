@@ -19,7 +19,6 @@ const DashboardPage = ({ mockRole }) => {
         if (mockRole && authUser?.role !== mockRole && updateUserRole) {
             updateUserRole(mockRole);
         }
-        console.log("Dashboard User:", user);
     }, [mockRole, user]);
 
     // Redirect to specialized dashboard

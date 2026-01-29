@@ -44,8 +44,6 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
     useEffect(() => {
         if (allOpps.length > 0 && availableYears.length > 0) {
             const latestYear = availableYears[0];
-            console.log('📅 Available years:', availableYears);
-            console.log('📅 Setting year to:', latestYear);
             if (!isNaN(latestYear) && latestYear !== selectedYear) {
                 setSelectedYear(latestYear);
             }
@@ -63,16 +61,6 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
 
     // Filter Logic
     useEffect(() => {
-        console.log('🔍 RevenueAnalyticsRow - allOpps:', allOpps.length);
-        console.log('🔍 Selected Year:', selectedYear, 'Filter:', filter);
-
-        if (allOpps.length > 0) {
-            console.log('🔍 First opportunity full structure:', JSON.stringify(allOpps[0], null, 2));
-            console.log('🔍 First opp year:', allOpps[0]?.commonDetails?.year);
-            console.log('🔍 First opp TOV:', allOpps[0]?.commonDetails?.tov);
-            console.log('🔍 First opp type:', allOpps[0]?.type);
-        }
-
         let targetFactor = 1;
 
         // Filter Opportunities by Year and Time Period
@@ -123,11 +111,10 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
             return false;
         });
 
-        console.log('✅ Filtered opps count:', filteredOpps.length);
 
         // Calculate Aggregates using ONLY PO Amount (poValue) - Strict PO-only
         const achievedRev = filteredOpps.reduce((sum, opp) => sum + (opp.poValue || 0), 0);
-        console.log('💰 Achieved Revenue (PO Amount only):', achievedRev);
+
 
         // Technology Distribution (List format with all technologies)
         const techMap = {};
@@ -148,7 +135,7 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
             value: techMap[tech]
         }));
 
-        console.log('📊 Tech Data:', techData);
+
 
         // Opportunity Type Distribution (Pie Chart)
         const typeMap = {};
@@ -171,7 +158,7 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
             }))
             .filter(i => i.value > 0);
 
-        console.log('📈 Type Data:', typeData);
+
 
         // Update target factor
         if (filter === 'H1' || filter === 'H2') targetFactor = 0.5;
@@ -228,7 +215,7 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
                 </div>
 
                 <div className="flex-1 w-full min-h-0 border-b border-gray-100 pb-1 mb-1">
-                    <ResponsiveContainer width="100%" height="90%">
+                    <ResponsiveContainer width="100%" height="90%" minWidth={0} minHeight={0}>
                         <BarChart
                             data={[
                                 {
@@ -339,7 +326,7 @@ const RevenueAnalyticsRow = ({ allOpps, yearlyTarget, currency, formatMoney, EXC
                 <h3 className="text-sm font-bold text-gray-800 mb-2">Revenue by Opportunity Type</h3>
                 <div className="flex-1 min-h-0">
                     {filteredData.typeData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <PieChart>
                                 <Pie
                                     data={filteredData.typeData}
