@@ -227,19 +227,62 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Select SME</label>
-                        <select
-                            value={formData.selectedSME || ''}
-                            onChange={(e) => handleChange('root', 'selectedSME', e.target.value)}
-                            disabled={!isEditing}
-                            className={selectClass}
-                        >
-                            <option value="">-- Select SME --</option>
-                            {filteredSMEs.map(s => (
-                                <option key={s._id} value={s._id}>
-                                    {s.name} - {s.companyName || 'N/A'}
-                                </option>
-                            ))}
-                        </select>
+                        <div className={`flex items-center border rounded-lg overflow-hidden ${!isEditing ? 'bg-gray-100 border-gray-200' : 'bg-gray-50 border-gray-200 focus-within:ring-2 focus-within:ring-primary-blue'}`}>
+                            <select
+                                value={formData.selectedSME || ''}
+                                onChange={(e) => handleChange('root', 'selectedSME', e.target.value)}
+                                disabled={!isEditing}
+                                className={`flex-1 p-2 border-none bg-transparent focus:ring-0 outline-none ${!isEditing ? 'cursor-not-allowed text-gray-500' : 'text-gray-900'}`}
+                            >
+                                <option value="">-- Select SME --</option>
+                                {filteredSMEs.map(s => (
+                                    <option key={s._id} value={s._id}>
+                                        {s.name} - {s.companyName || 'N/A'}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {/* Integrated Upload Trigger */}
+                            <div className="flex items-center px-2 border-l border-gray-200 bg-gray-100 h-full">
+                                {opportunity.deliveryDocuments?.sme_profile ? (
+                                    <div className="flex items-center gap-2">
+                                        <a
+                                            href={`http://localhost:5000/${opportunity.deliveryDocuments.sme_profile.replace(/\\/g, '/')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-primary-blue hover:text-blue-700"
+                                            title="View Profile"
+                                        >
+                                            <CheckCircle size={16} />
+                                        </a>
+                                        {isEditing && (
+                                            <label className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 font-medium">
+                                                Replace
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    onChange={(e) => handleDeliveryDocUpload(e, 'sme_profile')}
+                                                    disabled={uploading}
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
+                                ) : (
+                                    isEditing && (
+                                        <label className={`cursor-pointer flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded transition-colors ${uploading ? 'text-gray-400' : 'text-primary-blue hover:bg-blue-50'}`}>
+                                            <Upload size={14} />
+                                            <span>Upload</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                onChange={(e) => handleDeliveryDocUpload(e, 'sme_profile')}
+                                                disabled={uploading}
+                                            />
+                                        </label>
+                                    )
+                                )}
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
