@@ -12,6 +12,8 @@ import DeliveryTab from '../components/opportunity/tabs/DeliveryTab';
 import ExpensesTab from '../components/opportunity/tabs/ExpensesTab';
 import RevenueTab from '../components/opportunity/tabs/RevenueTab';
 import VendorPayablesTab from '../components/opportunity/tabs/VendorPayablesTab';
+import { useCurrency } from '../context/CurrencyContext';
+
 
 const OpportunityDetailPage = () => {
     const { id } = useParams();
@@ -26,7 +28,7 @@ const OpportunityDetailPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [isEditing, setIsEditing] = useState(false);
     const [tabLoading, setTabLoading] = useState(false); // To prevent double clicks or race conditions during save
-    const [currency, setCurrency] = useState('INR'); // Currency Toggle State
+    const { currency } = useCurrency();
 
     // Refs for tabs to call their internal save/cancel methods
     const salesRef = useRef();
@@ -35,7 +37,6 @@ const OpportunityDetailPage = () => {
     const revenueRef = useRef();
     const vendorPayablesRef = useRef();
 
-    // Permissions Helper
     // Permissions Helper
     const isOwner = opportunity && (opportunity.createdBy?._id === user.id || opportunity.createdBy === user.id);
 
@@ -211,7 +212,6 @@ const OpportunityDetailPage = () => {
                         canEdit={canEditDelivery || canEditSales} // Both can edit, specific sections restricted inside
                         isEditing={isEditing}
                         refreshData={fetchOpportunity}
-                        currency={currency}
                     />
                 );
             case 'vendor':
@@ -240,7 +240,7 @@ const OpportunityDetailPage = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen font-inter">
+        <div className="p-6 bg-gray-50 h-full font-inter">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
@@ -340,23 +340,7 @@ const OpportunityDetailPage = () => {
                     {/* Global Edit/Save Actions */}
                     {isCurrentTabEditable() && activeTab !== 'overview' && (
                         <div className="flex items-center gap-2 pr-4">
-                            {/* Currency Toggle - Only for Expenses Tab (Proposal Calculations) */}
-                            {activeTab === 'expenses' && (
-                                <div className="bg-gray-100 p-1 rounded-lg flex items-center mr-2 border border-gray-200">
-                                    <button
-                                        onClick={() => setCurrency('INR')}
-                                        className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${currency === 'INR' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                    >
-                                        INR
-                                    </button>
-                                    <button
-                                        onClick={() => setCurrency('USD')}
-                                        className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${currency === 'USD' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                    >
-                                        USD
-                                    </button>
-                                </div>
-                            )}
+                            {/* Currency Toggle moved to global header */}
 
                             {!isEditing ? (
                                 <button

@@ -78,13 +78,9 @@ const ManagerDashboard = ({ user: userProp }) => {
     const brandYellow = '#FCD34D';    // yellow (target)
 
     return (
-        <div className="p-6 space-y-8 bg-bg-page min-h-screen">
+        <div className="p-6 space-y-8 bg-bg-page h-full">
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-primary-blue">Welcome, {user?.name || 'Manager'}</h1>
-                </div>
-            </div>
+            {/* Header Removed */}
 
             {/* 1. KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -225,9 +221,9 @@ const ManagerDashboard = ({ user: userProp }) => {
                                 <div className="flex justify-between text-sm pt-2 border-t border-gray-300">
                                     <span className="text-gray-600">Team Achievement:</span>
                                     <span className={`font-bold ${(teamPerformance.reduce((sum, m) => sum + m.achieved, 0) /
-                                            teamPerformance.reduce((sum, m) => sum + m.target, 0) * 100) >= 100
-                                            ? 'text-green-600'
-                                            : 'text-gray-800'
+                                        teamPerformance.reduce((sum, m) => sum + m.target, 0) * 100) >= 100
+                                        ? 'text-green-600'
+                                        : 'text-gray-800'
                                         }`}>
                                         {((teamPerformance.reduce((sum, m) => sum + m.achieved, 0) /
                                             teamPerformance.reduce((sum, m) => sum + m.target, 0) * 100) || 0).toFixed(1)}%

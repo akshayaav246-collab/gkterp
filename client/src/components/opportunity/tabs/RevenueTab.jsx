@@ -4,11 +4,13 @@ import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
 import { useAuth } from '../../../context/AuthContext';
+import { useCurrency } from '../../../context/CurrencyContext';
+
 
 const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing }, ref) => {
     const { addToast } = useToast();
     const { user } = useAuth();
-    const [currency, setCurrency] = useState('INR'); // 'INR' or 'USD'
+    const { currency } = useCurrency();
     const [uploading, setUploading] = useState(false);
 
     // Check if user is Sales (Invoice fields should be read-only for Sales)
@@ -347,27 +349,7 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
                 <div className="max-w-5xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-gray-800">Gross Profit (GP) Analysis</h2>
-                        {/* Currency Toggle */}
-                        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                            <button
-                                onClick={() => setCurrency('INR')}
-                                className={`px-3 py-1.5 rounded-md font-medium text-sm transition-all ${currency === 'INR'
-                                    ? 'bg-white text-primary-blue shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                            >
-                                ₹ INR
-                            </button>
-                            <button
-                                onClick={() => setCurrency('USD')}
-                                className={`px-3 py-1.5 rounded-md font-medium text-sm transition-all ${currency === 'USD'
-                                    ? 'bg-white text-primary-blue shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                            >
-                                $ USD
-                            </button>
-                        </div>
+                        {/* Currency Toggle moved to global header */}
                     </div>
 
                     {/* Info Header */}

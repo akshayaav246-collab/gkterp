@@ -9,7 +9,7 @@ const FinanceDashboard = () => {
 
     return (
         <div className="p-6">
-            <h1 className="text-3xl font-bold text-primary-blue mb-8">Welcome, {user?.name || 'Finance Team'}</h1>
+            {/* Header Removed */}
 
             {/* GP Report Section */}
             <GPReportSection />

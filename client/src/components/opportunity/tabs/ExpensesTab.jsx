@@ -4,11 +4,13 @@ import { Upload, Paperclip, Trash2, DollarSign, TrendingUp, Clock, FileText, Eye
 import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
 import { useAuth } from '../../../context/AuthContext';
+import { useCurrency } from '../../../context/CurrencyContext';
 import AlertModal from '../../ui/AlertModal';
 
-const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, currency = 'INR' }, ref) => {
+const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }, ref) => {
     const { addToast } = useToast();
     const { user } = useAuth();
+    const { currency } = useCurrency();
     const [uploading, setUploading] = useState(null);
     const [escalating, setEscalating] = useState(false);
     const [formData, setFormData] = useState({});

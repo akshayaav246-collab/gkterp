@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Download, TrendingUp, Calendar } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useCurrency } from '../../context/CurrencyContext';
+
 
 const GPReportSection = () => {
     const [filterType, setFilterType] = useState('month'); // 'month', 'quarter', 'year'
@@ -10,7 +12,7 @@ const GPReportSection = () => {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState(new Date());
-    const [currency, setCurrency] = useState('INR'); // 'INR' or 'USD'
+    const { currency } = useCurrency(); // Global Currency
     const USD_TO_INR = 83; // Conversion rate
 
     // Month options with year
@@ -174,27 +176,7 @@ const GPReportSection = () => {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* Currency Toggle */}
-                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                        <button
-                            onClick={() => setCurrency('INR')}
-                            className={`px-3 py-1.5 rounded-md font-medium text-sm transition-all ${currency === 'INR'
-                                    ? 'bg-white text-primary-blue shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                        >
-                            ₹ INR
-                        </button>
-                        <button
-                            onClick={() => setCurrency('USD')}
-                            className={`px-3 py-1.5 rounded-md font-medium text-sm transition-all ${currency === 'USD'
-                                    ? 'bg-white text-primary-blue shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                        >
-                            $ USD
-                        </button>
-                    </div>
+                    {/* Currency Toggle moved to global header */}
                     <button
                         onClick={generateExcelReport}
                         disabled={!reportData || loading}

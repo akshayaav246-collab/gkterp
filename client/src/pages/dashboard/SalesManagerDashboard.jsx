@@ -9,6 +9,8 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import AlertModal from '../../components/ui/AlertModal';
 import { PieChart, Pie, Cell } from 'recharts';
+import { useCurrency } from '../../context/CurrencyContext';
+
 
 const SalesManagerDashboard = () => {
     const navigate = useNavigate();
@@ -27,7 +29,7 @@ const SalesManagerDashboard = () => {
     const [targetPeriod, setTargetPeriod] = useState('Yearly');
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null, type: 'info' });
-    const [currency, setCurrency] = useState('INR');
+    const { currency } = useCurrency();
 
     const EXCHANGE_RATE = 84;
 
@@ -222,7 +224,7 @@ const SalesManagerDashboard = () => {
     if (loading) return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
 
     return (
-        <div className="p-6 space-y-8 bg-bg-page min-h-screen">
+        <div className="p-6 space-y-8 bg-bg-page h-full">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
                 <div>
@@ -230,21 +232,7 @@ const SalesManagerDashboard = () => {
                     <p className="text-gray-600">Welcome back, {user?.name}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="bg-white border border-gray-200 rounded-lg p-1 flex items-center">
-                        <button
-                            onClick={() => setCurrency('INR')}
-                            className={`px-3 py-1.5 text-xs font-bold rounded ${currency === 'INR' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
-                        >
-                            INR
-                        </button>
-                        <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                        <button
-                            onClick={() => setCurrency('USD')}
-                            className={`px-3 py-1.5 text-xs font-bold rounded ${currency === 'USD' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
-                        >
-                            USD
-                        </button>
-                    </div>
+                    {/* Currency Toggle moved to global header */}
                 </div>
             </div>
             {/* KPI Cards */}

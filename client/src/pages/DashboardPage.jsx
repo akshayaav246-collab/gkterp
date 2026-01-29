@@ -76,18 +76,7 @@ const DashboardPage = ({ mockRole }) => {
 
     return (
         <div className="p-5">
-            <div className="flex justify-between items-end mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-primary-blue">Welcome, {user.name}</h1>
-                    <p className="text-gray-500">Sales Executive Dashboard</p>
-                </div>
-                {stats?.reportingManagerName && (
-                    <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 flex items-center text-sm text-blue-800">
-                        <UserCheck size={16} className="mr-2" />
-                        Reporting to: <span className="font-bold ml-1">{stats.reportingManagerName}</span>
-                    </div>
-                )}
-            </div>
+            {/* Header Removed */}
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

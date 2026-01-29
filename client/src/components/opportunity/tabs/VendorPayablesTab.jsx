@@ -2,9 +2,11 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'rea
 import axios from 'axios';
 import { ChevronDown, ChevronUp, Upload } from 'lucide-react';
 import { useToast } from '../../../context/ToastContext';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 const VendorPayablesTab = forwardRef(({ opportunity, canEdit, refreshData }, ref) => {
     const { addToast } = useToast();
+    const { currency } = useCurrency();
     const [uploading, setUploading] = useState(false);
 
     // Initial State Helpers
@@ -351,7 +353,7 @@ const ExpenseRow = ({
             >
                 <h3 className="font-bold text-gray-800">{label}</h3>
                 <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600">Final Payable: <span className="font-bold text-gray-900">₹ {data.finalPayable?.toLocaleString() || 0}</span></span>
+                    <span className="text-sm text-gray-600">Final Payable: <span className="font-bold text-gray-900">{currency === 'USD' ? '$' : '₹'} {(currency === 'USD' ? (data.finalPayable / 84) : data.finalPayable)?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || 0}</span></span>
                     {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </div>
             </div>

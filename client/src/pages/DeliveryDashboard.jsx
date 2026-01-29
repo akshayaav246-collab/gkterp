@@ -7,6 +7,8 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/CurrencyContext';
+
 
 const DeliveryDashboard = () => {
     const { updateUserRole, user } = useAuth();
@@ -18,7 +20,7 @@ const DeliveryDashboard = () => {
         salesChart: [], vendorChart: [], avgGpChart: []
     });
 
-    const [currency, setCurrency] = useState('INR'); // 'INR' or 'USD'
+    const { currency } = useCurrency();
     const EXCHANGE_RATE = 85;
 
     useEffect(() => {
@@ -73,32 +75,8 @@ const DeliveryDashboard = () => {
     }));
 
     return (
-        <div className="p-6 bg-bg-page min-h-screen space-y-8">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-primary-blue">Welcome, {user?.name || 'User'}</h1>
-
-                {/* Currency Toggle */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex items-center">
-                    <button
-                        onClick={() => setCurrency('INR')}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${currency === 'INR'
-                            ? 'bg-primary-blue text-white shadow-sm'
-                            : 'text-gray-500 hover:text-gray-900'
-                            }`}
-                    >
-                        INR (₹)
-                    </button>
-                    <button
-                        onClick={() => setCurrency('USD')}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${currency === 'USD'
-                            ? 'bg-primary-blue text-white shadow-sm'
-                            : 'text-gray-500 hover:text-gray-900'
-                            }`}
-                    >
-                        USD ($)
-                    </button>
-                </div>
-            </div>
+        <div className="p-6 bg-bg-page h-full space-y-8">
+            {/* Header Removed */}
 
             {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">

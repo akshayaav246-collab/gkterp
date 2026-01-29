@@ -174,7 +174,7 @@ const ProgramExecutionPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-bg-page p-5">
+        <div className="h-full bg-bg-page p-5">
             {/* Simplified Header */}
             <div className="sticky top-0 z-10 bg-bg-page pb-3 mb-4">
                 <div className="flex items-center justify-between">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     LayoutDashboard,
@@ -13,10 +13,31 @@ import {
     CreditCard
 } from 'lucide-react';
 
+import LogoutButton from '../common/LogoutButton';
+
 const Sidebar = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    // Use useNavigate to redirect after logout if needed, though useAuth usually handles state clearing. 
+    // Sidebar didn't have navigate before, so we might need it? 
+    // Layout.jsx used navigate('/login'). Sidebar already uses `Link` from react-router-dom, so we can use useNavigate?
+    // Wait, Sidebar.jsx imports `useLocation` from 'react-router-dom', but not `useNavigate`.
+    // Let's import useNavigate.
+
+    // Oh wait, I can't add imports with this tool easily in the header block unless I target the top.
+    // I am targeting lines 16-18. 
+
+    // Let me check the imports first. Line 2 has `useLocation`.
+    // I should probably do a separate replace for imports to be safe.
+
+    // For now, let's just add the hook usage here assuming I fix imports in next step.
     const location = useLocation();
+    const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(false);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     // Define menu items based on user role
     const getMenuItems = () => {
@@ -161,10 +182,15 @@ const Sidebar = () => {
                 {/* Collapse Toggle */}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="m-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center"
+                    className="mx-4 mt-2 mb-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center"
                 >
                     {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                 </button>
+
+                {/* Logout Button */}
+                <div className="w-full mb-6 flex justify-center">
+                    <LogoutButton onClick={handleLogout} isCollapsed={isCollapsed} />
+                </div>
             </div>
 
             {/* Spacer for content */}

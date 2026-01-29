@@ -3,6 +3,8 @@ import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar, Filter } from 'lucide-react';
 
+import { useCurrency } from '../../context/CurrencyContext';
+
 const ClientWiseGPChart = () => {
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -11,12 +13,15 @@ const ClientWiseGPChart = () => {
     const [selectedQuarter, setSelectedQuarter] = useState('Q4');
     const [selectedClient, setSelectedClient] = useState('all');
     const [clients, setClients] = useState([]);
+    const { currency } = useCurrency();
+    const EXCHANGE_RATE = 84;
 
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
     const fiscalYearStart = currentMonth >= 3 ? currentYear : currentYear - 1;
     const fiscalYearEnd = fiscalYearStart + 1;
 
+    // ... (months and quarters arrays remain same, no changes)
     const months = [
         { value: 0, label: `Jan ${currentYear}` }, { value: 1, label: `Feb ${currentYear}` }, { value: 2, label: `Mar ${currentYear}` },
         { value: 3, label: `Apr ${currentYear}` }, { value: 4, label: `May ${currentYear}` }, { value: 5, label: `Jun ${currentYear}` },
@@ -51,9 +56,11 @@ const ClientWiseGPChart = () => {
 
             // Transform data for chart
             const data = res.data.clientData || [];
+            // Assuming data is in INR base from backend? Usually backend reports are standardized.
+            // ClientGPReportSection treated them as base (INR/USD agnostic until conversion).
             setChartData(data);
 
-            // Extract unique clients for filter
+            // Extract unique clients
             const uniqueClients = data.map(item => ({
                 name: item.clientName,
                 value: item.clientName
@@ -67,24 +74,31 @@ const ClientWiseGPChart = () => {
         }
     };
 
-    // Filter data based on selected client
-    const filteredData = selectedClient === 'all'
-        ? chartData
-        : chartData.filter(item => item.clientName === selectedClient);
+    // Filter and Convert Data
+    const processedData = (selectedClient === 'all' ? chartData : chartData.filter(item => item.clientName === selectedClient)).map(item => ({
+        ...item,
+        totalRevenue: currency === 'INR' ? item.totalRevenue : item.totalRevenue / EXCHANGE_RATE,
+        totalExpenses: currency === 'INR' ? item.totalExpenses : item.totalExpenses / EXCHANGE_RATE,
+        gp: currency === 'INR' ? item.gp : item.gp / EXCHANGE_RATE
+    }));
 
     const formatCurrency = (value) => {
-        return `₹${(value / 1000).toFixed(0)}K`;
+        if (currency === 'INR') {
+            return `₹${(value / 1000).toFixed(0)}K`;
+        }
+        return `$${(value / 1000).toFixed(1)}K`; // USD K format
     };
 
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
+            const d = payload[0].payload;
             return (
                 <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
-                    <p className="font-bold text-gray-900 mb-2">{payload[0].payload.clientName}</p>
-                    <p className="text-sm text-blue-600">Revenue: ₹{payload[0].payload.totalRevenue.toLocaleString()}</p>
-                    <p className="text-sm text-red-600">Expenses: ₹{payload[0].payload.totalExpenses.toLocaleString()}</p>
-                    <p className="text-sm text-green-600 font-semibold">GP: ₹{payload[0].payload.gp.toLocaleString()}</p>
-                    <p className="text-sm text-gray-600">GP%: {payload[0].payload.gpPercent.toFixed(1)}%</p>
+                    <p className="font-bold text-gray-900 mb-2">{d.clientName}</p>
+                    <p className="text-sm text-blue-600">Revenue: {currency === 'INR' ? '₹' : '$'}{d.totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                    <p className="text-sm text-red-600">Expenses: {currency === 'INR' ? '₹' : '$'}{d.totalExpenses.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                    <p className="text-sm text-green-600 font-semibold">GP: {currency === 'INR' ? '₹' : '$'}{d.gp.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                    <p className="text-sm text-gray-600">GP%: {d.gpPercent.toFixed(1)}%</p>
                 </div>
             );
         }
@@ -139,14 +153,14 @@ const ClientWiseGPChart = () => {
                 <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
                 </div>
-            ) : filteredData.length === 0 ? (
+            ) : processedData.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                     No data available for the selected period
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height={400}>
                     <BarChart
-                        data={filteredData}
+                        data={processedData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
                     >
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

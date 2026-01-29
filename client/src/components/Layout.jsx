@@ -3,16 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './layout/Sidebar';
 import NotificationDropdown from './notifications/NotificationDropdown';
-import { LogOut } from 'lucide-react';
+import RealisticToggle from './common/RealisticToggle';
+import { useCurrency } from '../context/CurrencyContext';
 
 const Layout = ({ children }) => {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
-
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+    const { currency, setCurrency } = useCurrency();
 
     return (
         <div className="flex h-screen bg-bg-page">
@@ -38,17 +35,18 @@ const Layout = ({ children }) => {
 
                     {/* User Actions */}
                     <div className="flex items-center space-x-2">
+                        {/* Global Currency Toggle */}
+                        <div className="mr-4">
+                            <RealisticToggle
+                                checked={currency === 'USD'}
+                                onChange={(isChecked) => setCurrency(isChecked ? 'USD' : 'INR')}
+                            />
+                        </div>
+
                         {/* Notification Bell */}
                         <NotificationDropdown />
 
-                        {/* Logout Button */}
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-primary-blue hover:bg-primary-blue-light/10 rounded-lg transition-all"
-                        >
-                            <LogOut size={18} />
-                            <span className="text-sm font-medium">Logout</span>
-                        </button>
+                        {/* Logout Button Removed (Moved to Sidebar) */}
                     </div>
                 </header>
 
