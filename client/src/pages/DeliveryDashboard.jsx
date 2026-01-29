@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
-    Activity, CheckCircle, Clock, AlertCircle, TrendingUp, Users, Calendar
+    Activity, CheckCircle, Clock, TrendingUp, Users, Calendar
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line
@@ -65,7 +65,6 @@ const DeliveryDashboard = () => {
         { title: 'Trainings Scheduled (This Month)', value: stats.scheduledMonth, icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-100' },
         { title: 'Trainings Completed', value: stats.completed, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' },
         { title: 'SMEs Deployed', value: stats.smeDeployed, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-        { title: 'Pending Feedback', value: stats.pendingFeedback, icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-100', sub: 'Completed but no doc' },
     ];
 
     // Filter/Convert vendor chart data based on currency
