@@ -151,6 +151,8 @@ const ClientPage = () => {
 
         try {
             const token = localStorage.getItem('token');
+            let res;
+
             if (viewMode === 'edit' && selectedClient) {
                 // Update existing client
                 res = await axios.put(`http://localhost:5000/api/clients/${selectedClient._id}`, formData, {
