@@ -77,7 +77,7 @@ const migrate = async () => {
             if (!sme.panDocument) sme.panDocument = 'Pending';
             if (!sme.sowDocument) sme.sowDocument = 'Pending';
             if (!sme.ndaDocument) sme.ndaDocument = 'Pending';
-            if (!sme.profileDocument) sme.profileDocument = 'Pending';
+            if (!sme.contentUpload) sme.contentUpload = 'Pending';
 
             updated = true; // Force save to apply defaults and type
 

@@ -254,7 +254,8 @@ const OpportunitySchema = new mongoose.Schema({
         attendance: { type: String },
         feedback: { type: String },
         assessment: { type: String },
-        performance: { type: String }
+        performance: { type: String },
+        sme_profile: { type: String }
     },
 
     // Auto-calculated financial fields

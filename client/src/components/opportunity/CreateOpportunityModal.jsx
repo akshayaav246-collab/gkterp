@@ -4,6 +4,8 @@ import { X, Plus } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import AddClientModal from '../clients/AddClientModal';
 
+import SearchableSelect from '../ui/SearchableSelect';
+
 const TECHNOLOGIES = ['IBM', 'Red hat', 'Microsoft', 'Blockchain', 'Tableau', 'Mulesoft', 'AI alliance', 'Trending technologies'];
 
 const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
@@ -210,8 +212,8 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                         className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                                         required
                                     >
-                                        <option value="">Select Client</option>
-                                        <option value="ADD_NEW_CLIENT" className="font-bold text-primary-blue">+ Add New Client</option>
+                                        <option value="" hidden>Select Client</option>
+                                        <option value="ADD_NEW_CLIENT" className="font-bold text-primary-blue">Add New Client</option>
                                         {clients.map(client => (
                                             <option key={client._id} value={client._id}>
                                                 {client.companyName}
@@ -271,20 +273,15 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                        <input
-                                            list="technology-list-training"
+                                        <SearchableSelect
                                             name="technology"
                                             value={formData.technology}
                                             onChange={handleChange}
-                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                                            options={TECHNOLOGIES}
                                             placeholder="Select or type technology"
+                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                                             required
                                         />
-                                        <datalist id="technology-list-training">
-                                            {TECHNOLOGIES.map(tech => (
-                                                <option key={tech} value={tech} />
-                                            ))}
-                                        </datalist>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Training Name/Requirement *</label>
@@ -316,20 +313,15 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                        <input
-                                            list="technology-list-vouchers"
+                                        <SearchableSelect
                                             name="technology"
                                             value={formData.technology}
                                             onChange={handleChange}
-                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                                            options={TECHNOLOGIES}
                                             placeholder="Select or type technology"
+                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                                             required
                                         />
-                                        <datalist id="technology-list-vouchers">
-                                            {TECHNOLOGIES.map(tech => (
-                                                <option key={tech} value={tech} />
-                                            ))}
-                                        </datalist>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Exam Details *</label>
@@ -351,20 +343,15 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                        <input
-                                            list="technology-list-lab"
+                                        <SearchableSelect
                                             name="technology"
                                             value={formData.technology}
                                             onChange={handleChange}
-                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                                            options={TECHNOLOGIES}
                                             placeholder="Select or type technology"
+                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                                             required
                                         />
-                                        <datalist id="technology-list-lab">
-                                            {TECHNOLOGIES.map(tech => (
-                                                <option key={tech} value={tech} />
-                                            ))}
-                                        </datalist>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Requirement *</label>

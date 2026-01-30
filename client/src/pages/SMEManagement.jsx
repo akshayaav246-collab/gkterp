@@ -61,7 +61,7 @@ const SMEManagement = () => {
     const [files, setFiles] = useState({
         sowDocument: null,
         ndaDocument: null,
-        profileDocument: null,
+        contentUpload: null,
         idProof: null,
         panDocument: null,
         gstDocument: null
@@ -243,7 +243,7 @@ const SMEManagement = () => {
         setFiles({
             sowDocument: null,
             ndaDocument: null,
-            profileDocument: null,
+            contentUpload: null,
             idProof: null,
             panDocument: null,
             gstDocument: null
@@ -434,7 +434,7 @@ const SMEManagement = () => {
                             <div className="flex flex-wrap gap-4">
                                 {renderDocumentLink(selectedSme.sowDocument, 'SOW Document')}
                                 {renderDocumentLink(selectedSme.ndaDocument, 'NDA Document')}
-                                {renderDocumentLink(selectedSme.profileDocument, 'Profile')}
+                                {renderDocumentLink(selectedSme.contentUpload, 'Profile')}
                                 {renderDocumentLink(selectedSme.idProof, 'ID Proof')}
                                 {renderDocumentLink(selectedSme.gstDocument, 'GST Certificate')}
                                 {renderDocumentLink(selectedSme.panDocument, 'PAN Card')}
@@ -557,8 +557,8 @@ const SMEManagement = () => {
                                         <input type="file" name="ndaDocument" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
                                     </div>
                                     <div className="border p-3 rounded bg-gray-50">
-                                        <label className="block text-sm font-medium mb-1">Profile Document *</label>
-                                        <input type="file" name="profileDocument" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
+                                        <label className="block text-sm font-medium mb-1">Profile Document (Content Upload) *</label>
+                                        <input type="file" name="contentUpload" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
                                     </div>
                                     <div className="border p-3 rounded bg-gray-50">
                                         <label className="block text-sm font-medium mb-1">ID Proof (Optional)</label>

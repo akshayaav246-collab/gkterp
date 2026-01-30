@@ -195,6 +195,10 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
             uploadFormData.append('document', file);
             uploadFormData.append('type', type);
 
+            if (type === 'sme_profile' && formData.selectedSME) {
+                uploadFormData.append('smeId', formData.selectedSME);
+            }
+
             await axios.post(
                 `http://localhost:5000/api/opportunities/${opportunity._id}/upload-delivery-doc`,
                 uploadFormData,
@@ -266,10 +270,11 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                             href={`http://localhost:5000/${opportunity.deliveryDocuments.sme_profile.replace(/\\/g, '/')}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-primary-blue hover:text-blue-700"
+                                            className="flex items-center gap-1 text-xs text-primary-blue hover:text-blue-700 font-medium"
                                             title="View Profile"
                                         >
-                                            <CheckCircle size={16} />
+                                            <CheckCircle size={14} />
+                                            <span>Content Upload</span>
                                         </a>
                                         {isEditing && (
                                             <label className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 font-medium">

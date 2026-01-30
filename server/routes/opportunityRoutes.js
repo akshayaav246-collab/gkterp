@@ -4,6 +4,7 @@ const Opportunity = require('../models/Opportunity');
 const Client = require('../models/Client');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const SME = require('../models/SME');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { calculateOpportunityProgress } = require('../utils/progressCalculator');
 const multer = require('multer');
@@ -924,9 +925,29 @@ router.post('/:id/upload-delivery-doc', protect, authorize('Delivery Team', 'Sal
             details: `${type} document uploaded by ${req.user.name}`
         });
 
+        if (type === 'sme_profile' && req.body.smeId) {
+            // Update the selectedSME in the opportunity itself so it persists
+            // Ensure we don't try to assign invalid IDs
+            if (req.body.smeId.match(/^[0-9a-fA-F]{24}$/)) {
+                opportunity.selectedSME = req.body.smeId;
+            }
+        }
+
         // Mark as modified to ensure mixed type/nested object is saved
         opportunity.markModified('deliveryDocuments');
+
+        // Save Opportunity ONCE
         await opportunity.save();
+
+        // Update SME record if applicable
+        if (type === 'sme_profile' && req.body.smeId) {
+            const sme = await SME.findById(req.body.smeId);
+            if (sme) {
+                sme.contentUpload = req.file.path;
+                await sme.save({ validateBeforeSave: false });
+                console.log(`Updated SME ${sme.name} contentUpload`);
+            }
+        }
 
         res.json({
             message: `${type} uploaded successfully`,
@@ -934,7 +955,8 @@ router.post('/:id/upload-delivery-doc', protect, authorize('Delivery Team', 'Sal
             progress: opportunity.progressPercentage
         });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error('Upload Error Details:', err);
+        res.status(500).json({ message: err.message, stack: err.stack });
     }
 });
 

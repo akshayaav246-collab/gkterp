@@ -35,7 +35,7 @@ const upload = multer({
 router.post('/', protect, authorize('Sales Executive', 'Sales Manager', 'Director', 'Delivery Team'), upload.fields([
     { name: 'sowDocument', maxCount: 1 },
     { name: 'ndaDocument', maxCount: 1 },
-    { name: 'profileDocument', maxCount: 1 },
+    { name: 'contentUpload', maxCount: 1 },
     { name: 'idProof', maxCount: 1 },
     { name: 'panDocument', maxCount: 1 },
     { name: 'gstDocument', maxCount: 1 } // Added
@@ -56,14 +56,14 @@ router.post('/', protect, authorize('Sales Executive', 'Sales Manager', 'Directo
         if (req.files) {
             if (req.files.sowDocument) smeData.sowDocument = req.files.sowDocument[0].path;
             if (req.files.ndaDocument) smeData.ndaDocument = req.files.ndaDocument[0].path;
-            if (req.files.profileDocument) smeData.profileDocument = req.files.profileDocument[0].path;
+            if (req.files.contentUpload) smeData.contentUpload = req.files.contentUpload[0].path;
             if (req.files.idProof) smeData.idProof = req.files.idProof[0].path;
             if (req.files.panDocument) smeData.panDocument = req.files.panDocument[0].path;
             if (req.files.gstDocument) smeData.gstDocument = req.files.gstDocument[0].path;
         }
 
         // Validate required documents (Manual check for safety, though schema handles it)
-        const requiredDocs = ['sowDocument', 'ndaDocument', 'profileDocument', 'panDocument', 'gstDocument'];
+        const requiredDocs = ['sowDocument', 'ndaDocument', 'contentUpload', 'panDocument', 'gstDocument'];
         const missingDocs = requiredDocs.filter(doc => !smeData[doc]);
 
         if (missingDocs.length > 0) {
@@ -145,7 +145,7 @@ router.get('/:id', protect, async (req, res) => {
 router.put('/:id', protect, authorize('Sales Executive', 'Sales Manager', 'Director', 'Delivery Team'), upload.fields([
     { name: 'sowDocument', maxCount: 1 },
     { name: 'ndaDocument', maxCount: 1 },
-    { name: 'profileDocument', maxCount: 1 },
+    { name: 'contentUpload', maxCount: 1 },
     { name: 'idProof', maxCount: 1 },
     { name: 'panDocument', maxCount: 1 },
     { name: 'gstDocument', maxCount: 1 } // Added
@@ -172,7 +172,7 @@ router.put('/:id', protect, authorize('Sales Executive', 'Sales Manager', 'Direc
         if (req.files) {
             if (req.files.sowDocument) updateData.sowDocument = req.files.sowDocument[0].path;
             if (req.files.ndaDocument) updateData.ndaDocument = req.files.ndaDocument[0].path;
-            if (req.files.profileDocument) updateData.profileDocument = req.files.profileDocument[0].path;
+            if (req.files.contentUpload) updateData.contentUpload = req.files.contentUpload[0].path;
             if (req.files.idProof) updateData.idProof = req.files.idProof[0].path;
             if (req.files.panDocument) updateData.panDocument = req.files.panDocument[0].path;
             if (req.files.gstDocument) updateData.gstDocument = req.files.gstDocument[0].path;

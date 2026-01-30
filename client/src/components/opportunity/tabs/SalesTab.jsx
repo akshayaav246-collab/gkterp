@@ -4,6 +4,8 @@ import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
 
+import SearchableSelect from '../../ui/SearchableSelect';
+
 const TECHNOLOGIES = ['IBM', 'Red hat', 'Microsoft', 'Blockchain', 'Tableau', 'Mulesoft', 'AI alliance', 'Trending technologies'];
 
 const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, user }, ref) => {
@@ -210,19 +212,14 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                <input
-                                    list="technology-list-training-sales"
+                                <SearchableSelect
                                     value={formData.typeSpecificDetails?.technology || ''}
                                     onChange={(e) => handleChange('typeSpecificDetails', 'technology', e.target.value)}
+                                    options={TECHNOLOGIES}
+                                    placeholder="Select or type technology"
                                     disabled={!isEditing}
                                     className={selectClass}
-                                    placeholder="Select or type technology"
                                 />
-                                <datalist id="technology-list-training-sales">
-                                    {TECHNOLOGIES.map(tech => (
-                                        <option key={tech} value={tech} />
-                                    ))}
-                                </datalist>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Training Name/Requirement *</label>
@@ -292,19 +289,14 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                <input
-                                    list="technology-list-vouchers-sales"
+                                <SearchableSelect
                                     value={formData.typeSpecificDetails?.technology || ''}
                                     onChange={(e) => handleChange('typeSpecificDetails', 'technology', e.target.value)}
+                                    options={TECHNOLOGIES}
+                                    placeholder="Select or type technology"
                                     disabled={!isEditing}
                                     className={selectClass}
-                                    placeholder="Select or type technology"
                                 />
-                                <datalist id="technology-list-vouchers-sales">
-                                    {TECHNOLOGIES.map(tech => (
-                                        <option key={tech} value={tech} />
-                                    ))}
-                                </datalist>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Exam Details *</label>
@@ -347,19 +339,14 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                <input
-                                    list="technology-list-lab-sales"
+                                <SearchableSelect
                                     value={formData.typeSpecificDetails?.technology || ''}
                                     onChange={(e) => handleChange('typeSpecificDetails', 'technology', e.target.value)}
+                                    options={TECHNOLOGIES}
+                                    placeholder="Select or type technology"
                                     disabled={!isEditing}
                                     className={selectClass}
-                                    placeholder="Select or type technology"
                                 />
-                                <datalist id="technology-list-lab-sales">
-                                    {TECHNOLOGIES.map(tech => (
-                                        <option key={tech} value={tech} />
-                                    ))}
-                                </datalist>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Requirement *</label>
