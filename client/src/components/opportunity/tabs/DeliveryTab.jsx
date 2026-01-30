@@ -126,16 +126,32 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
 
     const handleChange = (section, field, value) => {
         setFormData(prev => {
+            const newState = { ...prev };
             if (section === 'root') {
-                return { ...prev, [field]: value };
+                newState[field] = value;
+            } else {
+                newState[section] = { ...prev[section], [field]: value };
             }
-            return {
-                ...prev,
-                [section]: {
-                    ...prev[section],
-                    [field]: value
+
+            // Auto-calculate end date when start date or days changes
+            if ((section === 'commonDetails' && field === 'startDate') || (section === 'root' && field === 'days')) {
+                const startDate = section === 'commonDetails' && field === 'startDate' ? value : newState.commonDetails?.startDate;
+                const days = section === 'root' && field === 'days' ? value : newState.days;
+
+                if (startDate && days && parseInt(days) > 0) {
+                    const start = new Date(startDate);
+                    const end = new Date(start);
+                    // Add days - 1 (since start date is day 1)
+                    end.setDate(start.getDate() + parseInt(days) - 1);
+
+                    if (!newState.commonDetails) {
+                        newState.commonDetails = {};
+                    }
+                    newState.commonDetails.endDate = end.toISOString().split('T')[0];
                 }
-            };
+            }
+
+            return newState;
         });
     };
 
@@ -320,7 +336,7 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Yr</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
                             <select
                                 value={formData.commonDetails?.year || new Date().getFullYear()}
                                 onChange={(e) => handleChange('commonDetails', 'year', parseInt(e.target.value))}
@@ -332,7 +348,7 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Mo</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
                             <select
                                 value={formData.commonDetails?.monthOfTraining || ''}
                                 onChange={(e) => handleChange('commonDetails', 'monthOfTraining', e.target.value)}
@@ -340,7 +356,7 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                 className={selectClass}
                             >
                                 <option value="">Month</option>
-                                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => (
+                                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
                                     <option key={m} value={m}>{m}</option>
                                 ))}
                             </select>

@@ -123,6 +123,27 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
 
                 newState.commonDetails.tov = calculatedTov;
             }
+
+            // Auto-calculate end date when start date or days changes
+            if ((section === 'commonDetails' && field === 'startDate') || (section === 'root' && field === 'days')) {
+                const startDate = section === 'commonDetails' && field === 'startDate' ? value : newState.commonDetails?.startDate;
+                const days = section === 'root' && field === 'days' ? value : newState.days;
+
+                if (startDate && days && parseInt(days) > 0) {
+                    const start = new Date(startDate);
+                    const end = new Date(start);
+                    // Add days - 1 (since start date is day 1)
+                    end.setDate(start.getDate() + parseInt(days) - 1);
+
+                    // Only auto-update if user hasn't manually set end date
+                    // (We check if end date is empty or matches previous auto-calculation)
+                    if (!newState.commonDetails) {
+                        newState.commonDetails = {};
+                    }
+                    newState.commonDetails.endDate = end.toISOString().split('T')[0];
+                }
+            }
+
             return newState;
         });
     };
@@ -189,17 +210,19 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                <select
+                                <input
+                                    list="technology-list-training-sales"
                                     value={formData.typeSpecificDetails?.technology || ''}
                                     onChange={(e) => handleChange('typeSpecificDetails', 'technology', e.target.value)}
                                     disabled={!isEditing}
                                     className={selectClass}
-                                >
-                                    <option value="">-- Select Technology --</option>
+                                    placeholder="Select or type technology"
+                                />
+                                <datalist id="technology-list-training-sales">
                                     {TECHNOLOGIES.map(tech => (
-                                        <option key={tech} value={tech}>{tech}</option>
+                                        <option key={tech} value={tech} />
                                     ))}
-                                </select>
+                                </datalist>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Training Name/Requirement *</label>
@@ -269,17 +292,19 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                <select
+                                <input
+                                    list="technology-list-vouchers-sales"
                                     value={formData.typeSpecificDetails?.technology || ''}
                                     onChange={(e) => handleChange('typeSpecificDetails', 'technology', e.target.value)}
                                     disabled={!isEditing}
                                     className={selectClass}
-                                >
-                                    <option value="">-- Select Technology --</option>
+                                    placeholder="Select or type technology"
+                                />
+                                <datalist id="technology-list-vouchers-sales">
                                     {TECHNOLOGIES.map(tech => (
-                                        <option key={tech} value={tech}>{tech}</option>
+                                        <option key={tech} value={tech} />
                                     ))}
-                                </select>
+                                </datalist>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Exam Details *</label>
@@ -322,17 +347,19 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                         <>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                <select
+                                <input
+                                    list="technology-list-lab-sales"
                                     value={formData.typeSpecificDetails?.technology || ''}
                                     onChange={(e) => handleChange('typeSpecificDetails', 'technology', e.target.value)}
                                     disabled={!isEditing}
                                     className={selectClass}
-                                >
-                                    <option value="">-- Select Technology --</option>
+                                    placeholder="Select or type technology"
+                                />
+                                <datalist id="technology-list-lab-sales">
                                     {TECHNOLOGIES.map(tech => (
-                                        <option key={tech} value={tech}>{tech}</option>
+                                        <option key={tech} value={tech} />
                                     ))}
-                                </select>
+                                </datalist>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Requirement *</label>
@@ -426,7 +453,7 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                     {/* Month/Year Selection */}
                     <div className="grid grid-cols-2 gap-2">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Yr</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
                             <select
                                 value={formData.commonDetails?.year || new Date().getFullYear()}
                                 onChange={(e) => handleChange('commonDetails', 'year', parseInt(e.target.value))}
@@ -438,7 +465,7 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Mo</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
                             <select
                                 value={formData.commonDetails?.monthOfTraining || ''}
                                 onChange={(e) => handleChange('commonDetails', 'monthOfTraining', e.target.value)}
@@ -446,7 +473,7 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                                 className={selectClass}
                             >
                                 <option value="">Month</option>
-                                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => (
+                                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
                                     <option key={m} value={m}>{m}</option>
                                 ))}
                             </select>

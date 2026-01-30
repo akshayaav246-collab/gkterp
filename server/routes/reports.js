@@ -28,10 +28,10 @@ router.get('/gp-analysis', protect, async (req, res) => {
 
         if (type === 'quarter') {
             const qMap = {
-                'Q1': { months: ['Apr', 'May', 'Jun'], yearOffset: 0 },
-                'Q2': { months: ['Jul', 'Aug', 'Sep'], yearOffset: 0 },
-                'Q3': { months: ['Oct', 'Nov', 'Dec'], yearOffset: 0 },
-                'Q4': { months: ['Jan', 'Feb', 'Mar'], yearOffset: 1 }
+                'Q1': { months: ['April', 'May', 'June'], yearOffset: 0 },
+                'Q2': { months: ['July', 'August', 'September'], yearOffset: 0 },
+                'Q3': { months: ['October', 'November', 'December'], yearOffset: 0 },
+                'Q4': { months: ['January', 'February', 'March'], yearOffset: 1 }
             };
 
             const selectedQ = qMap[quarter];
@@ -48,11 +48,11 @@ router.get('/gp-analysis', protect, async (req, res) => {
             query = {
                 $or: [
                     {
-                        'commonDetails.monthOfTraining': { $in: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] },
+                        'commonDetails.monthOfTraining': { $in: ['April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] },
                         'commonDetails.year': yearInt
                     },
                     {
-                        'commonDetails.monthOfTraining': { $in: ['Jan', 'Feb', 'Mar'] },
+                        'commonDetails.monthOfTraining': { $in: ['January', 'February', 'March'] },
                         'commonDetails.year': yearInt + 1
                     }
                 ]

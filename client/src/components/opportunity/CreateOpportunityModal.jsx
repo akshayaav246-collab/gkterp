@@ -271,12 +271,20 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                        <select name="technology" value={formData.technology} onChange={handleChange} className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" required>
-                                            <option value="">Select Technology</option>
-                                            {TECHNOLOGIES.filter(t => t !== 'Select Technology').map(tech => (
-                                                <option key={tech} value={tech}>{tech}</option>
+                                        <input
+                                            list="technology-list-training"
+                                            name="technology"
+                                            value={formData.technology}
+                                            onChange={handleChange}
+                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                                            placeholder="Select or type technology"
+                                            required
+                                        />
+                                        <datalist id="technology-list-training">
+                                            {TECHNOLOGIES.map(tech => (
+                                                <option key={tech} value={tech} />
                                             ))}
-                                        </select>
+                                        </datalist>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Training Name/Requirement *</label>
@@ -308,12 +316,20 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                        <select name="technology" value={formData.technology} onChange={handleChange} className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" required>
-                                            <option value="">Select Technology</option>
+                                        <input
+                                            list="technology-list-vouchers"
+                                            name="technology"
+                                            value={formData.technology}
+                                            onChange={handleChange}
+                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                                            placeholder="Select or type technology"
+                                            required
+                                        />
+                                        <datalist id="technology-list-vouchers">
                                             {TECHNOLOGIES.map(tech => (
-                                                <option key={tech} value={tech}>{tech}</option>
+                                                <option key={tech} value={tech} />
                                             ))}
-                                        </select>
+                                        </datalist>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Exam Details *</label>
@@ -335,12 +351,20 @@ const CreateOpportunityModal = ({ isOpen, onClose, onSuccess }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Technology *</label>
-                                        <select name="technology" value={formData.technology} onChange={handleChange} className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" required>
-                                            <option value="">Select Technology</option>
+                                        <input
+                                            list="technology-list-lab"
+                                            name="technology"
+                                            value={formData.technology}
+                                            onChange={handleChange}
+                                            className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                                            placeholder="Select or type technology"
+                                            required
+                                        />
+                                        <datalist id="technology-list-lab">
                                             {TECHNOLOGIES.map(tech => (
-                                                <option key={tech} value={tech}>{tech}</option>
+                                                <option key={tech} value={tech} />
                                             ))}
-                                        </select>
+                                        </datalist>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Requirement *</label>

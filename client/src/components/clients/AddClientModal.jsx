@@ -223,8 +223,9 @@ const AddClientModal = ({ isOpen, onClose, onSuccess }) => {
                                                 value={contact.contactNumber}
                                                 onChange={(e) => handleContactChange(index, 'contactNumber', e.target.value)}
                                                 className="w-full bg-white border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary-blue"
-                                                placeholder="+91"
-                                                title="Enter a valid phone number"
+                                                placeholder="10 digits"
+                                                title="Enter a valid 10-digit phone number"
+                                                maxLength="10"
                                                 required
                                             />
                                         </div>
@@ -259,6 +260,8 @@ const AddClientModal = ({ isOpen, onClose, onSuccess }) => {
                                                     value={contact.reportingManager.contactNumber}
                                                     onChange={(e) => handleReportingManagerChange(index, 'contactNumber', e.target.value)}
                                                     className="w-full border p-2 rounded text-sm bg-white"
+                                                    placeholder="10 digits"
+                                                    maxLength="10"
                                                 />
                                             </div>
                                             <div>
