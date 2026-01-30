@@ -274,7 +274,7 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                             title="View Profile"
                                         >
                                             <CheckCircle size={14} />
-                                            <span>Content Upload</span>
+                                            <span> content upload</span>
                                         </a>
                                         {isEditing && (
                                             <label className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 font-medium">

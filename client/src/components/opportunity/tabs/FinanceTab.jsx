@@ -270,6 +270,55 @@ const FinanceTab = ({ opportunity, editMode, canEditField, handleUpdate, user })
                     </div>
                 </Card>
 
+                {/* NEW: Proposal Financial Block */}
+                <Card>
+                    <h3 className="text-lg font-bold text-primary-blue mb-4">Financial Summary (Proposal)</h3>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO Amount</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Expense</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketing</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GK Revenue (Profit)</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Markup %</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">
+                                        ₹{(opportunity.poValue || 0).toLocaleString()}
+                                    </td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                        {/* Total Expense derived from PO and Profit logic for display consistency if needed, or raw sum */}
+                                        ₹{((opportunity.financeDetails?.vendorPayables?.total || 0) + (opportunity.financeDetails?.vendorPayables?.detailed?.marketing?.invoiceValue || 0)).toLocaleString()}
+                                    </td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                        ₹{(opportunity.expenses?.marketing || 0).toLocaleString()}
+                                    </td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-green-600">
+                                        {/* Profit = PO - Total Expense */}
+                                        ₹{((opportunity.poValue || 0) - ((opportunity.financeDetails?.vendorPayables?.total || 0) + (opportunity.financeDetails?.vendorPayables?.detailed?.marketing?.invoiceValue || 0))).toLocaleString()}
+                                    </td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-blue-600">
+                                        {/* Markup % = Profit / Total Expense */}
+                                        {(() => {
+                                            const totalExp = (opportunity.financeDetails?.vendorPayables?.total || 0) + (opportunity.financeDetails?.vendorPayables?.detailed?.marketing?.invoiceValue || 0);
+                                            const profit = (opportunity.poValue || 0) - totalExp;
+                                            return totalExp > 0 ? ((profit / totalExp) * 100).toFixed(2) : '0';
+                                        })()}%
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div className="mt-2 text-xs text-gray-500 italic">
+                            * GK Revenue (Profit) = PO Amount - Total Expenses
+                            <br />
+                            * Markup % = GK Revenue / Total Expenses
+                        </div>
+                    </div>
+                </Card>
+
                 {/* Expense Breakdown */}
                 <Card>
                     <div className="flex justify-between items-center mb-4">

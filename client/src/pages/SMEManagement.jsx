@@ -557,7 +557,7 @@ const SMEManagement = () => {
                                         <input type="file" name="ndaDocument" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
                                     </div>
                                     <div className="border p-3 rounded bg-gray-50">
-                                        <label className="block text-sm font-medium mb-1">Profile Document (Content Upload) *</label>
+                                        <label className="block text-sm font-medium mb-1">Profile Document *</label>
                                         <input type="file" name="contentUpload" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
                                     </div>
                                     <div className="border p-3 rounded bg-gray-50">

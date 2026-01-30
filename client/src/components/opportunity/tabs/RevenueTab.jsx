@@ -345,6 +345,108 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
                 </Card>
             </div>
 
+            {isSales && (
+                <div className="max-w-5xl mx-auto">
+                    <Card>
+                        <h3 className="text-lg font-bold text-primary-blue mb-4">Financial Summary</h3>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO Amount</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Expense</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketing</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GK Revenue (Profit)</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO to Proposal Variance</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GP %</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">
+                                            {formatCurrency(formData.poValue || 0)}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                            {/* Logic: OpEx + Contingency + Marketing */}
+                                            {(() => {
+                                                const exp = opportunity.expenses || {};
+                                                const expenseTypes = [
+                                                    'trainerCost', 'vouchersCost', 'gkRoyalty', 'material', 'labs',
+                                                    'venue', 'travel', 'accommodation', 'perDiem', 'localConveyance'
+                                                ];
+                                                const opEx = expenseTypes.reduce((sum, key) => sum + (parseFloat(exp[key]) || 0), 0);
+                                                const contingency = parseFloat(exp.contingency) || 0;
+                                                const marketing = parseFloat(exp.marketing) || 0;
+                                                const calculatedTotalExpense = opEx + contingency + marketing;
+
+                                                return formatCurrency(calculatedTotalExpense);
+                                            })()}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                            {formatCurrency(opportunity.expenses?.marketing || 0)}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-green-600">
+                                            {(() => {
+                                                const exp = opportunity.expenses || {};
+                                                const expenseTypes = [
+                                                    'trainerCost', 'vouchersCost', 'gkRoyalty', 'material', 'labs',
+                                                    'venue', 'travel', 'accommodation', 'perDiem', 'localConveyance'
+                                                ];
+                                                const opEx = expenseTypes.reduce((sum, key) => sum + (parseFloat(exp[key]) || 0), 0);
+                                                const contingency = parseFloat(exp.contingency) || 0;
+                                                const marketing = parseFloat(exp.marketing) || 0;
+                                                const calculatedTotalExpense = opEx + contingency + marketing;
+
+                                                return formatCurrency((formData.poValue || 0) - calculatedTotalExpense);
+                                            })()}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-sm font-bold">
+                                            {(() => {
+                                                const poAmount = formData.poValue || 0;
+                                                const proposalValue = opportunity.commonDetails?.tov || 0;
+                                                const variance = poAmount - proposalValue;
+                                                const isPositive = variance >= 0;
+
+                                                return (
+                                                    <span className={isPositive ? "text-green-600" : "text-red-500"}>
+                                                        {formatCurrency(variance)}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-blue-600">
+                                            {(() => {
+                                                const exp = opportunity.expenses || {};
+                                                const expenseTypes = [
+                                                    'trainerCost', 'vouchersCost', 'gkRoyalty', 'material', 'labs',
+                                                    'venue', 'travel', 'accommodation', 'perDiem', 'localConveyance'
+                                                ];
+                                                const opEx = expenseTypes.reduce((sum, key) => sum + (parseFloat(exp[key]) || 0), 0);
+                                                const contingency = parseFloat(exp.contingency) || 0;
+                                                const marketing = parseFloat(exp.marketing) || 0;
+                                                const calculatedTotalExpense = opEx + contingency + marketing;
+                                                const poAmount = formData.poValue || 0;
+                                                const profit = poAmount - calculatedTotalExpense;
+
+                                                // Formula: (GK Revenue / PO Amount) * 100
+                                                return poAmount > 0 ? ((profit / poAmount) * 100).toFixed(2) : '0';
+                                            })()}%
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div className="mt-2 text-xs text-gray-500 italic">
+                                * GK Revenue (Profit) = PO Amount - Total Expenses
+                                <br />
+                                * PO to Proposal Variance = PO Amount - Proposal Value
+                                <br />
+                                * GP % = GK Revenue / PO Amount
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
             {!isSales && (
                 <div className="max-w-5xl mx-auto">
                     <div className="flex items-center justify-between mb-6">

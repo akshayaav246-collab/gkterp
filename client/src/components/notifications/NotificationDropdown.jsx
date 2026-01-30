@@ -256,9 +256,7 @@ const NotificationDropdown = () => {
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-slate-500 mt-1">
-                                            Stay updated with approval requests and expense reports.
-                                        </p>
+
                                     </div>
                                     <div className="flex items-center gap-3 mt-1">
                                         {unreadCount > 0 && (

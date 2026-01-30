@@ -47,30 +47,27 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
         ];
         const opEx = expenseTypesList.reduce((sum, key) => sum + parseCurrency(exp[key]), 0);
 
-        // 2. Contingency Amount (OpEx * %)
-        const contingencyPercent = exp.contingencyPercent ?? 20;
+        // 2. Contingency Amount (OpEx * %) - Default updated to 15%
+        const contingencyPercent = exp.contingencyPercent ?? 15;
         const contingencyAmount = (opEx * contingencyPercent) / 100;
         exp.contingency = contingencyAmount;
 
-        // 3. Total Expenses (OpEx + Contingency)
-        const totalExpenses = opEx + contingencyAmount;
-
-        // 4. GKT Profit (Markup on Total Expenses)
-        const gpPercent = exp.targetGpPercent ?? 30; // Use targetGpPercent
-        const gktProfit = (totalExpenses * gpPercent) / 100;
-
-        // 5. Base Order Value
-        const baseTov = totalExpenses + gktProfit;
-
-        // 6. Marketing Amount (Base TOV * %)
+        // 3. Marketing Amount (OpEx * %) - Changed to be based on OpEx
         const marketingPercent = exp.marketingPercent ?? 0;
-        const marketingAmount = (baseTov * marketingPercent) / 100;
+        const marketingAmount = (opEx * marketingPercent) / 100;
         exp.marketing = marketingAmount;
 
-        // 7. Final Proposal Value (TOV)
-        const finalTov = baseTov + marketingAmount;
+        // 4. Total Expenses (OpEx + Contingency + Marketing)
+        const totalExpenses = opEx + contingencyAmount + marketingAmount;
 
-        // Update TOV in Common Details
+        // 5. Profit Amount (Markup Logic: Total Expenses * Profit%)
+        const profitPercent = exp.targetGpPercent ?? 30;
+        const profitAmount = (totalExpenses * profitPercent) / 100;
+
+        // 6. Final Proposal Value (TOV) = Total Expenses + Profit
+        const finalTov = totalExpenses + profitAmount;
+
+
         common.tov = Math.round(finalTov);
 
         // Update TOV Rate based on Unit
@@ -225,9 +222,9 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
             if (exp.marketingPercent === undefined || exp.marketingPercent === null) {
                 exp.marketingPercent = 0;
             }
-            // If contingencyPercent is undefined/null, default to 20
+            // If contingencyPercent is undefined/null, default to 15
             if (exp.contingencyPercent === undefined || exp.contingencyPercent === null) {
-                exp.contingencyPercent = 20;
+                exp.contingencyPercent = 15;
             }
 
             // Auto-calculate Marketing & Contingency if values are missing
@@ -523,6 +520,19 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                         <span>Cost / Pax:</span>
                                         <span>{CURRENCY_SYMBOL} {costPerParticipant ? (Number(costPerParticipant) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0'}</span>
                                     </div>
+                                    <div className="flex justify-between text-base text-green-700 font-bold border-t border-green-200 pt-2 mt-2">
+                                        <span>GP %:</span>
+                                        <span>
+                                            {(() => {
+                                                const tov = formData.commonDetails?.tov || 0;
+                                                const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
+                                                    (parseFloat(activeData.expenses?.contingency) || 0) +
+                                                    (parseFloat(activeData.expenses?.marketing) || 0);
+                                                const profit = tov - totalExp;
+                                                return tov > 0 ? ((profit / tov) * 100).toFixed(2) : '0.00';
+                                            })()}%
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -532,47 +542,85 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                             <div className="grid grid-cols-1 gap-4">
                                 {/* GP Margin - Dropdown 1-30% */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">GP Margin (%)</label>
-                                    <select
-                                        value={formData.expenses?.targetGpPercent ?? 30}
-                                        onChange={(e) => handleGpChange(parseFloat(e.target.value))}
-                                        disabled={!canEditExecution}
-                                        className={`w-full border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-brand-blue'}`}
-                                    >
-                                        {Array.from({ length: 30 }, (_, i) => i + 1).map(p => (
-                                            <option key={p} value={p}>{p}%</option>
-                                        ))}
-                                    </select>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Profit (%)</label>
+                                    <div className="flex space-x-2">
+                                        <select
+                                            value={formData.expenses?.targetGpPercent ?? 30}
+                                            onChange={(e) => handleGpChange(parseFloat(e.target.value))}
+                                            disabled={!canEditExecution}
+                                            className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-brand-blue'}`}
+                                        >
+                                            {Array.from({ length: 30 }, (_, i) => i + 1).map(p => (
+                                                <option key={p} value={p}>{p}%</option>
+                                            ))}
+                                        </select>
+                                        <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
+                                            {CURRENCY_SYMBOL} {(() => {
+                                                const tov = formData.commonDetails?.tov || 0;
+                                                // Recalculate basic expense just for display consistency
+                                                const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
+                                                    (parseFloat(activeData.expenses?.contingency) || 0) +
+                                                    (parseFloat(activeData.expenses?.marketing) || 0);
+                                                const profit = tov - totalExp;
+                                                return (profit / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                                            })()}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Contingency - Dropdown 1-20% */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Contingency (%)</label>
-                                    <select
-                                        value={formData.expenses?.contingencyPercent ?? 20}
-                                        onChange={(e) => handleContingencyChange(parseFloat(e.target.value))}
-                                        disabled={!canEditExecution}
-                                        className={`w-full border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
-                                    >
-                                        {Array.from({ length: 20 }, (_, i) => i + 1).map(p => (
-                                            <option key={p} value={p}>{p}%</option>
-                                        ))}
-                                    </select>
+                                    <div className="flex space-x-2">
+                                        <select
+                                            value={formData.expenses?.contingencyPercent ?? 20}
+                                            onChange={(e) => handleContingencyChange(parseFloat(e.target.value))}
+                                            disabled={!canEditExecution}
+                                            className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
+                                        >
+                                            {Array.from({ length: 15 }, (_, i) => i + 1).map(p => (
+                                                <option key={p} value={p}>{p}%</option>
+                                            ))}
+                                        </select>
+                                        <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
+                                            {CURRENCY_SYMBOL} {((formData.expenses?.contingency || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Marketing */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Marketing (%)</label>
-                                    <select
-                                        value={formData.expenses?.marketingPercent ?? 0}
-                                        onChange={(e) => handleChange('expenses', 'marketingPercent', parseFloat(e.target.value))}
-                                        disabled={!canEditExecution}
-                                        className={`w-full border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
-                                    >
-                                        {[0, 1, 2, 3, 4, 5].map(p => (
-                                            <option key={p} value={p}>{p}%</option>
-                                        ))}
-                                    </select>
+                                    <div className="flex space-x-2">
+                                        <select
+                                            value={formData.expenses?.marketingPercent ?? 0}
+                                            onChange={(e) => handleChange('expenses', 'marketingPercent', parseFloat(e.target.value))}
+                                            disabled={!canEditExecution}
+                                            className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
+                                        >
+                                            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (
+                                                <option key={p} value={p}>{p}%</option>
+                                            ))}
+                                        </select>
+                                        <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
+                                            {CURRENCY_SYMBOL} {((formData.expenses?.marketing || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Total Expenses - Display Only */}
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                        <span className="text-sm font-bold text-blue-800">Total Expenses</span>
+                                        <span className="text-lg font-extrabold text-blue-800">
+                                            {CURRENCY_SYMBOL} {(() => {
+                                                const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
+                                                    (parseFloat(activeData.expenses?.contingency) || 0) +
+                                                    (parseFloat(activeData.expenses?.marketing) || 0);
+                                                return (totalExp / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                                            })()}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -672,17 +720,57 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                             </div>
                         </div>
 
+
+
+                        {/* NEW: Financial Summary Block (Visible for Delivery/Admin) */}
+                        {canEditOpExpenses && (
+                            <div className="mt-8 pt-6 border-t border-gray-200">
+                                <h4 className="text-lg font-bold text-gray-900 mb-4">Financial Summary (Delivery)</h4>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO Amount</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Expense</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketing</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GK Revenue (Profit)</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GP %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            <tr>
+                                                <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                    {CURRENCY_SYMBOL} {(tov / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                    {CURRENCY_SYMBOL} {(totalExpenses / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                    {CURRENCY_SYMBOL} {((activeData.expenses?.marketing || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-green-600">
+                                                    {CURRENCY_SYMBOL} {(gktRevenue / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-blue-600">
+                                                    {gpPercentage}%
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Total Footer */}
                         <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
-                            <h4 className="text-lg font-bold text-gray-900">Total Expenses</h4>
+                            <h4 className="text-lg font-bold text-gray-900">Total Operational Expenses</h4>
                             <div className="text-xl font-bold text-gray-900">
                                 {CURRENCY_SYMBOL} {(opExTotal / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                             </div>
                         </div>
                     </Card>
                 </div>
-
-            </div>
+            </div >
 
             <AlertModal
                 isOpen={alertConfig.isOpen}
@@ -693,7 +781,7 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                 type={alertConfig.type}
                 confirmText="Send for Approval"
             />
-        </div>
+        </div >
     );
 });
 
