@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
+import UploadButton from '../ui/UploadButton';
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DocumentUpload = ({ opportunityId, onUploadSuccess }) => {
@@ -122,17 +123,10 @@ const DocumentUpload = ({ opportunityId, onUploadSuccess }) => {
                 )}
 
                 {/* Upload Button */}
-                <button
+                <UploadButton
                     onClick={handleUpload}
                     disabled={uploading || !file}
-                    className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-white ${uploading || !file
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-brand-blue hover:bg-opacity-90'
-                        }`}
-                >
-                    <Upload size={18} />
-                    <span>{uploading ? 'Uploading...' : 'Upload Document'}</span>
-                </button>
+                />
             </div>
         </div>
     );

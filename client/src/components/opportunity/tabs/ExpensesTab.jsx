@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Upload, Paperclip, Trash2, DollarSign, TrendingUp, Clock, FileText, Eye, Send, CheckCircle, XCircle } from 'lucide-react';
 import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
+import UploadButton from '../../ui/UploadButton';
 import { useAuth } from '../../../context/AuthContext';
 import { useCurrency } from '../../../context/CurrencyContext';
 import AlertModal from '../../ui/AlertModal';
@@ -700,17 +701,12 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                                             onChange={(e) => handleProposalUpload(e, key)}
                                                             disabled={!canEditOpExpenses || uploading === key}
                                                         />
-                                                        <label
-                                                            htmlFor={`upload-${key}`}
-                                                            className={`cursor-pointer transition-colors p-2 rounded-full hover:bg-gray-100 inline-flex items-center justify-center ${uploading === key ? 'text-gray-400' : 'text-gray-500 hover:text-blue-600'}`}
-                                                            title="Attach Proposal"
+                                                        <UploadButton
+                                                            onClick={() => document.getElementById(`upload-${key}`).click()}
+                                                            disabled={!canEditOpExpenses || uploading === key}
                                                         >
-                                                            {uploading === key ? (
-                                                                <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
-                                                            ) : (
-                                                                <Paperclip size={18} />
-                                                            )}
-                                                        </label>
+                                                            {uploading === key ? '...' : (opportunity.expenseDocuments?.[key]?.length > 0 ? 'Replace' : 'Upload')}
+                                                        </UploadButton>
                                                     </div>
                                                 )}
                                             </div>

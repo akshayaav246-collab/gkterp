@@ -5,6 +5,7 @@ import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useCurrency } from '../../../context/CurrencyContext';
+import UploadButton from '../../ui/UploadButton';
 
 
 const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing }, ref) => {
@@ -250,12 +251,12 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
                                                 accept=".pdf,.doc,.docx,.jpg,.png"
                                                 disabled={uploading}
                                             />
-                                            <label
-                                                htmlFor="po-upload"
-                                                className="text-xs text-brand-blue font-semibold cursor-pointer hover:underline whitespace-nowrap ml-2"
+                                            <UploadButton
+                                                onClick={() => document.getElementById('po-upload').click()}
+                                                disabled={uploading}
                                             >
                                                 {opportunity.poDocument ? 'Replace' : 'Upload'}
-                                            </label>
+                                            </UploadButton>
                                         </div>
                                     )}
                                 </div>
@@ -330,12 +331,12 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
                                                 accept=".pdf,.doc,.docx,.jpg,.png"
                                                 disabled={uploading}
                                             />
-                                            <label
-                                                htmlFor="invoice-upload"
-                                                className="text-xs text-brand-blue font-semibold cursor-pointer hover:underline whitespace-nowrap ml-2"
+                                            <UploadButton
+                                                onClick={() => document.getElementById('invoice-upload').click()}
+                                                disabled={uploading}
                                             >
                                                 {opportunity.invoiceDocument ? 'Replace' : 'Upload'}
-                                            </label>
+                                            </UploadButton>
                                         </div>
                                     )}
                                 </div>

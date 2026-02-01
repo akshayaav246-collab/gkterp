@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ChevronDown, ChevronUp, Upload } from 'lucide-react';
 import { useToast } from '../../../context/ToastContext';
 import { useCurrency } from '../../../context/CurrencyContext';
+import UploadButton from '../../ui/UploadButton';
 
 const VendorPayablesTab = forwardRef(({ opportunity, canEdit, refreshData }, ref) => {
     const { addToast } = useToast();
@@ -285,10 +286,21 @@ const VendorPayablesTab = forwardRef(({ opportunity, canEdit, refreshData }, ref
                                     <a href={`http://localhost:5000/${vendorData.perDiem.document.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Doc</a>
                                 ) : <span className="text-gray-400 text-xs italic">No Doc</span>}
                                 {canEdit && (
-                                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                        {uploading ? '...' : (vendorData.perDiem.document ? 'Replace' : 'Upload')}
-                                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'perDiem', 'document')} disabled={uploading} />
-                                    </label>
+                                    <div className="inline-block">
+                                        <input
+                                            type="file"
+                                            id="upload-perDiem"
+                                            className="hidden"
+                                            onChange={(e) => handleFileUpload(e, 'perDiem', 'document')}
+                                            disabled={uploading}
+                                        />
+                                        <UploadButton
+                                            onClick={() => document.getElementById('upload-perDiem').click()}
+                                            disabled={uploading}
+                                        >
+                                            {vendorData.perDiem.document ? 'Replace' : 'Upload'}
+                                        </UploadButton>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -316,10 +328,21 @@ const VendorPayablesTab = forwardRef(({ opportunity, canEdit, refreshData }, ref
                                     <a href={`http://localhost:5000/${vendorData.other.document.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Doc</a>
                                 ) : <span className="text-gray-400 text-xs italic">No Doc</span>}
                                 {canEdit && (
-                                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                        {uploading ? '...' : (vendorData.other.document ? 'Replace' : 'Upload')}
-                                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'other', 'document')} disabled={uploading} />
-                                    </label>
+                                    <div className="inline-block">
+                                        <input
+                                            type="file"
+                                            id="upload-other"
+                                            className="hidden"
+                                            onChange={(e) => handleFileUpload(e, 'other', 'document')}
+                                            disabled={uploading}
+                                        />
+                                        <UploadButton
+                                            onClick={() => document.getElementById('upload-other').click()}
+                                            disabled={uploading}
+                                        >
+                                            {vendorData.other.document ? 'Replace' : 'Upload'}
+                                        </UploadButton>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -392,10 +415,21 @@ const ExpenseRow = ({
                                         <a href={`http://localhost:5000/${data.poDocument.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Uploaded PO</a>
                                     ) : <span className="text-gray-400 text-xs italic">No Document</span>}
                                     {canEdit && (
-                                        <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                            {uploading ? '...' : (data.poDocument ? 'Replace' : 'Upload')}
-                                            <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, category, 'poDocument')} disabled={uploading} />
-                                        </label>
+                                        <div className="inline-block">
+                                            <input
+                                                type="file"
+                                                id={`upload-po-${category}`}
+                                                className="hidden"
+                                                onChange={(e) => handleFileUpload(e, category, 'poDocument')}
+                                                disabled={uploading}
+                                            />
+                                            <UploadButton
+                                                onClick={() => document.getElementById(`upload-po-${category}`).click()}
+                                                disabled={uploading}
+                                            >
+                                                {data.poDocument ? 'Replace' : 'Upload'}
+                                            </UploadButton>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -432,10 +466,21 @@ const ExpenseRow = ({
                                         <a href={`http://localhost:5000/${data.invoiceDocument.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Uploaded Invoice</a>
                                     ) : <span className="text-gray-400 text-xs italic">No Document</span>}
                                     {canEdit && (
-                                        <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                            {uploading ? '...' : (data.invoiceDocument ? 'Replace' : 'Upload')}
-                                            <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, category, 'invoiceDocument')} disabled={uploading} />
-                                        </label>
+                                        <div className="inline-block">
+                                            <input
+                                                type="file"
+                                                id={`upload-invoice-${category}`}
+                                                className="hidden"
+                                                onChange={(e) => handleFileUpload(e, category, 'invoiceDocument')}
+                                                disabled={uploading}
+                                            />
+                                            <UploadButton
+                                                onClick={() => document.getElementById(`upload-invoice-${category}`).click()}
+                                                disabled={uploading}
+                                            >
+                                                {data.invoiceDocument ? 'Replace' : 'Upload'}
+                                            </UploadButton>
+                                        </div>
                                     )}
                                 </div>
                             </div>

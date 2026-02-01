@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Upload, CheckCircle } from 'lucide-react';
 import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
+import UploadButton from '../../ui/UploadButton';
 
 const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }, ref) => {
     const { addToast } = useToast();
@@ -277,29 +278,40 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                             <span> content upload</span>
                                         </a>
                                         {isEditing && (
-                                            <label className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 font-medium">
-                                                Replace
+                                            <div className="inline-block">
                                                 <input
                                                     type="file"
+                                                    id="sme-profile-replace"
                                                     className="hidden"
                                                     onChange={(e) => handleDeliveryDocUpload(e, 'sme_profile')}
                                                     disabled={uploading}
                                                 />
-                                            </label>
+                                                <UploadButton
+                                                    onClick={() => document.getElementById('sme-profile-replace').click()}
+                                                    disabled={uploading}
+                                                >
+                                                    Replace
+                                                </UploadButton>
+                                            </div>
                                         )}
                                     </div>
                                 ) : (
                                     isEditing && (
-                                        <label className={`cursor-pointer flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded transition-colors ${uploading ? 'text-gray-400' : 'text-primary-blue hover:bg-blue-50'}`}>
-                                            <Upload size={14} />
-                                            <span>Upload</span>
+                                        <div className="inline-block">
                                             <input
                                                 type="file"
+                                                id="sme-profile-upload"
                                                 className="hidden"
                                                 onChange={(e) => handleDeliveryDocUpload(e, 'sme_profile')}
                                                 disabled={uploading}
                                             />
-                                        </label>
+                                            <UploadButton
+                                                onClick={() => document.getElementById('sme-profile-upload').click()}
+                                                disabled={uploading}
+                                            >
+                                                Upload
+                                            </UploadButton>
+                                        </div>
                                     )
                                 )}
                             </div>
@@ -604,12 +616,13 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                             accept=".pdf,.doc,.docx,.xlsx"
                                             disabled={uploading}
                                         />
-                                        <label
-                                            htmlFor={`doc-upload-${docType}`}
-                                            className={`cursor-pointer block w-full text-center py-1.5 rounded text-xs text-white transition-colors ${uploading ? 'bg-gray-400' : 'bg-brand-blue hover:bg-blue-700'}`}
+                                        <UploadButton
+                                            onClick={() => document.getElementById(`doc-upload-${docType}`).click()}
+                                            disabled={uploading}
+                                            className="w-full"
                                         >
                                             {opportunity.deliveryDocuments?.[docType] ? 'Replace' : 'Upload'}
-                                        </label>
+                                        </UploadButton>
                                     </div>
                                 )}
                             </div>

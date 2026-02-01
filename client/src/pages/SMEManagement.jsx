@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, ArrowLeft, Edit, Search, Filter, FileText, Building, ArrowRight } from 'lucide-react';
+import UploadButton from '../components/ui/UploadButton';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { validateMobile, validateEmail } from '../utils/validation';
@@ -534,12 +535,34 @@ const SMEManagement = () => {
                                     <div>
                                         <input name="gstNo" value={formData.gstNo} onChange={handleInputChange} placeholder="GST Number *" className="border p-2 rounded w-full mb-2" required />
                                         <label className="block text-xs text-gray-500 mb-1">GST Document *</label>
-                                        <input type="file" name="gstDocument" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.jpg,.png" required={!editMode} />
+                                        <div className="flex flex-col gap-2">
+                                            <input type="file" id="upload-gst" name="gstDocument" onChange={handleFileChange} className="hidden" accept=".pdf,.jpg,.png" />
+                                            <div className="flex items-center gap-2">
+                                                <UploadButton onClick={() => document.getElementById('upload-gst').click()} type="button">
+                                                    {files.gstDocument ? 'Selected' : (editMode && selectedSme?.gstDocument ? 'Replace' : 'Upload')}
+                                                </UploadButton>
+                                                {files.gstDocument && <span className="text-xs text-green-600 truncate max-w-[100px]">{files.gstDocument.name}</span>}
+                                                {editMode && selectedSme?.gstDocument && !files.gstDocument && (
+                                                    <a href={`http://localhost:5000/${selectedSme.gstDocument}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue hover:underline">View</a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div>
                                         <input name="panNo" value={formData.panNo} onChange={handleInputChange} placeholder="PAN Number *" className="border p-2 rounded w-full mb-2" required />
                                         <label className="block text-xs text-gray-500 mb-1">PAN Card *</label>
-                                        <input type="file" name="panDocument" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.jpg,.png" required={!editMode} />
+                                        <div className="flex flex-col gap-2">
+                                            <input type="file" id="upload-pan" name="panDocument" onChange={handleFileChange} className="hidden" accept=".pdf,.jpg,.png" />
+                                            <div className="flex items-center gap-2">
+                                                <UploadButton onClick={() => document.getElementById('upload-pan').click()} type="button">
+                                                    {files.panDocument ? 'Selected' : (editMode && selectedSme?.panDocument ? 'Replace' : 'Upload')}
+                                                </UploadButton>
+                                                {files.panDocument && <span className="text-xs text-green-600 truncate max-w-[100px]">{files.panDocument.name}</span>}
+                                                {editMode && selectedSme?.panDocument && !files.panDocument && (
+                                                    <a href={`http://localhost:5000/${selectedSme.panDocument}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue hover:underline">View</a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -550,19 +573,63 @@ const SMEManagement = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                     <div className="border p-3 rounded bg-gray-50">
                                         <label className="block text-sm font-medium mb-1">SOW Document *</label>
-                                        <input type="file" name="sowDocument" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
+                                        <div className="flex flex-col gap-2">
+                                            <input type="file" id="upload-sow" name="sowDocument" onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx" />
+                                            <div className="flex items-center gap-2">
+                                                <UploadButton onClick={() => document.getElementById('upload-sow').click()} type="button">
+                                                    {files.sowDocument ? 'Selected' : (editMode && selectedSme?.sowDocument ? 'Replace' : 'Upload')}
+                                                </UploadButton>
+                                                {files.sowDocument && <span className="text-xs text-green-600 truncate max-w-[100px]">{files.sowDocument.name}</span>}
+                                                {editMode && selectedSme?.sowDocument && !files.sowDocument && (
+                                                    <a href={`http://localhost:5000/${selectedSme.sowDocument}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue hover:underline">View</a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="border p-3 rounded bg-gray-50">
                                         <label className="block text-sm font-medium mb-1">NDA Document *</label>
-                                        <input type="file" name="ndaDocument" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
+                                        <div className="flex flex-col gap-2">
+                                            <input type="file" id="upload-nda" name="ndaDocument" onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx" />
+                                            <div className="flex items-center gap-2">
+                                                <UploadButton onClick={() => document.getElementById('upload-nda').click()} type="button">
+                                                    {files.ndaDocument ? 'Selected' : (editMode && selectedSme?.ndaDocument ? 'Replace' : 'Upload')}
+                                                </UploadButton>
+                                                {files.ndaDocument && <span className="text-xs text-green-600 truncate max-w-[100px]">{files.ndaDocument.name}</span>}
+                                                {editMode && selectedSme?.ndaDocument && !files.ndaDocument && (
+                                                    <a href={`http://localhost:5000/${selectedSme.ndaDocument}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue hover:underline">View</a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="border p-3 rounded bg-gray-50">
                                         <label className="block text-sm font-medium mb-1">Profile Document *</label>
-                                        <input type="file" name="contentUpload" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.doc,.docx" required={!editMode} />
+                                        <div className="flex flex-col gap-2">
+                                            <input type="file" id="upload-profile" name="contentUpload" onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx" />
+                                            <div className="flex items-center gap-2">
+                                                <UploadButton onClick={() => document.getElementById('upload-profile').click()} type="button">
+                                                    {files.contentUpload ? 'Selected' : (editMode && selectedSme?.contentUpload ? 'Replace' : 'Upload')}
+                                                </UploadButton>
+                                                {files.contentUpload && <span className="text-xs text-green-600 truncate max-w-[100px]">{files.contentUpload.name}</span>}
+                                                {editMode && selectedSme?.contentUpload && !files.contentUpload && (
+                                                    <a href={`http://localhost:5000/${selectedSme.contentUpload}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue hover:underline">View</a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="border p-3 rounded bg-gray-50">
                                         <label className="block text-sm font-medium mb-1">ID Proof (Optional)</label>
-                                        <input type="file" name="idProof" onChange={handleFileChange} className="text-sm w-full" accept=".pdf,.jpg,.png" />
+                                        <div className="flex flex-col gap-2">
+                                            <input type="file" id="upload-idproof" name="idProof" onChange={handleFileChange} className="hidden" accept=".pdf,.jpg,.png" />
+                                            <div className="flex items-center gap-2">
+                                                <UploadButton onClick={() => document.getElementById('upload-idproof').click()} type="button">
+                                                    {files.idProof ? 'Selected' : (editMode && selectedSme?.idProof ? 'Replace' : 'Upload')}
+                                                </UploadButton>
+                                                {files.idProof && <span className="text-xs text-green-600 truncate max-w-[100px]">{files.idProof.name}</span>}
+                                                {editMode && selectedSme?.idProof && !files.idProof && (
+                                                    <a href={`http://localhost:5000/${selectedSme.idProof}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue hover:underline">View</a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, Calculator, ChevronDown, ChevronUp, Upload } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import UploadButton from '../../components/ui/UploadButton';
 
 const FinanceDetails = () => {
     const { id } = useParams();
@@ -441,10 +442,21 @@ const FinanceDetails = () => {
                                                 {vendorData.perDiem.document ? (
                                                     <a href={`http://localhost:5000/${vendorData.perDiem.document.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Doc</a>
                                                 ) : <span className="text-gray-400 text-xs italic">No Doc</span>}
-                                                <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                                    {uploading ? '...' : (vendorData.perDiem.document ? 'Replace' : 'Upload')}
-                                                    <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'perDiem', 'document')} disabled={uploading} />
-                                                </label>
+                                                <div className="inline-block">
+                                                    <input
+                                                        type="file"
+                                                        id="upload-perdiem-doc"
+                                                        className="hidden"
+                                                        onChange={(e) => handleFileUpload(e, 'perDiem', 'document')}
+                                                        disabled={uploading}
+                                                    />
+                                                    <UploadButton
+                                                        onClick={() => document.getElementById('upload-perdiem-doc').click()}
+                                                        disabled={uploading}
+                                                    >
+                                                        {vendorData.perDiem.document ? 'Replace' : 'Upload'}
+                                                    </UploadButton>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -468,10 +480,21 @@ const FinanceDetails = () => {
                                                 {vendorData.other.document ? (
                                                     <a href={`http://localhost:5000/${vendorData.other.document.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Doc</a>
                                                 ) : <span className="text-gray-400 text-xs italic">No Doc</span>}
-                                                <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                                    {uploading ? '...' : (vendorData.other.document ? 'Replace' : 'Upload')}
-                                                    <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'other', 'document')} disabled={uploading} />
-                                                </label>
+                                                <div className="inline-block">
+                                                    <input
+                                                        type="file"
+                                                        id="upload-other-doc"
+                                                        className="hidden"
+                                                        onChange={(e) => handleFileUpload(e, 'other', 'document')}
+                                                        disabled={uploading}
+                                                    />
+                                                    <UploadButton
+                                                        onClick={() => document.getElementById('upload-other-doc').click()}
+                                                        disabled={uploading}
+                                                    >
+                                                        {vendorData.other.document ? 'Replace' : 'Upload'}
+                                                    </UploadButton>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -765,10 +788,21 @@ const ExpenseRow = ({
                                     {data.poDocument ? (
                                         <a href={`http://localhost:5000/${data.poDocument.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Uploaded PO</a>
                                     ) : <span className="text-gray-400 text-xs italic">No Document</span>}
-                                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                        {uploading ? '...' : (data.poDocument ? 'Replace' : 'Upload')}
-                                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, category, 'poDocument')} disabled={uploading} />
-                                    </label>
+                                    <div className="inline-block">
+                                        <input
+                                            type="file"
+                                            id={`upload-po-${category}`}
+                                            className="hidden"
+                                            onChange={(e) => handleFileUpload(e, category, 'poDocument')}
+                                            disabled={uploading}
+                                        />
+                                        <UploadButton
+                                            onClick={() => document.getElementById(`upload-po-${category}`).click()}
+                                            disabled={uploading}
+                                        >
+                                            {data.poDocument ? 'Replace' : 'Upload'}
+                                        </UploadButton>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -803,10 +837,21 @@ const ExpenseRow = ({
                                     {data.invoiceDocument ? (
                                         <a href={`http://localhost:5000/${data.invoiceDocument.replace(/\\/g, '/')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">View Uploaded Invoice</a>
                                     ) : <span className="text-gray-400 text-xs italic">No Document</span>}
-                                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded border border-gray-300">
-                                        {uploading ? '...' : (data.invoiceDocument ? 'Replace' : 'Upload')}
-                                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, category, 'invoiceDocument')} disabled={uploading} />
-                                    </label>
+                                    <div className="inline-block">
+                                        <input
+                                            type="file"
+                                            id={`upload-invoice-${category}`}
+                                            className="hidden"
+                                            onChange={(e) => handleFileUpload(e, category, 'invoiceDocument')}
+                                            disabled={uploading}
+                                        />
+                                        <UploadButton
+                                            onClick={() => document.getElementById(`upload-invoice-${category}`).click()}
+                                            disabled={uploading}
+                                        >
+                                            {data.invoiceDocument ? 'Replace' : 'Upload'}
+                                        </UploadButton>
+                                    </div>
                                 </div>
                             </div>
                         </div>
