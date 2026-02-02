@@ -89,16 +89,17 @@ const OperationalExpensesBreakdown = ({
         const selectedType = data.type || (typeOptions ? typeOptions[0].value : '');
         const currentTotal = activeData.expenses?.[category] || 0;
 
-        // Auto-initialize type if missing
-        useEffect(() => {
-            if (!data.type && typeOptions) {
-                updateBreakdown(category, 'type', typeOptions[0].value);
-            }
-        }, []);
-
         const typeLabel = typeOptions
             ? (typeOptions.find(o => o.value === data.type)?.label || data.type)
             : (fixedTypeLabel ? fixedTypeLabel.replace('Fixed: ', '') : 'Fixed');
+
+        // Initialize type if missing (without useEffect to avoid re-renders)
+        if (!data.type && typeOptions && canEdit) {
+            // Use setTimeout to avoid state update during render
+            setTimeout(() => {
+                updateBreakdown(category, 'type', typeOptions[0].value);
+            }, 0);
+        }
 
         return (
             <div className={`bg-gray-50 border border-gray-200 rounded-lg ${!canEdit ? 'p-2' : 'p-3'} mb-4 last:mb-0`}>
@@ -135,12 +136,7 @@ const OperationalExpensesBreakdown = ({
                                 {selectedType === 'costPerDay' && (
                                     <div className="col-span-2"><Input label="Rate / Day" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
                                 )}
-                                {selectedType === 'costPerHour' && (
-                                    <>
-                                        <Input label="Hours/Day" value={data.hours} onChange={v => updateBreakdown(category, 'hours', v)} />
-                                        <Input label="Rate/Hour" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} />
-                                    </>
-                                )}
+                                {selectedType === 'costPerHour' && <><Input label="Hours" value={data.hours} onChange={v => updateBreakdown(category, 'hours', v)} /><Input label="Rate/Hour" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></>}
                                 {selectedType === 'totalCost' && (
                                     <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
                                 )}
@@ -150,12 +146,7 @@ const OperationalExpensesBreakdown = ({
                         {/* Material Logic */}
                         {category === 'material' && (
                             <>
-                                {selectedType === 'costPerPax' && (
-                                    <>
-                                        <Input label="Pax" value={data.pax || pax} onChange={v => updateBreakdown(category, 'pax', v)} />
-                                        <Input label="Rate / Pax" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} />
-                                    </>
-                                )}
+                                {selectedType === 'costPerPax' && <><Input label="Pax" value={data.pax || pax} onChange={v => updateBreakdown(category, 'pax', v)} /><Input label="Rate / Pax" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></>}
                                 {selectedType === 'overallCost' && (
                                     <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
                                 )}
@@ -165,12 +156,7 @@ const OperationalExpensesBreakdown = ({
                         {/* Lab Logic */}
                         {category === 'labs' && (
                             <>
-                                {(selectedType === 'costPerPaxDay' || selectedType === 'costPerPaxAllDays') && (
-                                    <>
-                                        <Input label="Pax" value={data.pax || pax} onChange={v => updateBreakdown(category, 'pax', v)} />
-                                        <Input label={`Rate / Pax${selectedType === 'costPerPaxDay' ? ' / Day' : ''}`} value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} />
-                                    </>
-                                )}
+                                {(selectedType === 'costPerPaxDay' || selectedType === 'costPerPaxAllDays') && <><Input label="Pax" value={data.pax || pax} onChange={v => updateBreakdown(category, 'pax', v)} /><Input label={`Rate / Pax${selectedType === 'costPerPaxDay' ? ' / Day' : ''}`} value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></>}
                                 {selectedType === 'totalCost' && (
                                     <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
                                 )}
@@ -196,7 +182,7 @@ const OperationalExpensesBreakdown = ({
                     </div>
                 )}
 
-                {/* Footer: Upload (Delivery) or View (Sales) */}
+                {/* Footer: Upload (Delivery only) or View */}
                 {(canEdit || opportunity.expenseDocuments?.[category]?.length > 0) && (
                     <div className={`flex justify-end ${!canEdit ? 'mt-1 pt-1' : 'mt-1 pt-1'} border-t border-gray-100`}>
                         <div className="flex items-center space-x-2">
@@ -238,7 +224,6 @@ const OperationalExpensesBreakdown = ({
     };
 
     const Input = ({ label, value, onChange }) => {
-        // Hide currency symbol if label contains "Pax"
         const isPaxOrHours = label.toLowerCase().includes('pax') || label.toLowerCase().includes('hours');
         const { currency } = useCurrency();
         const CURRENCY_SYMBOL = currency === 'USD' ? '$' : '₹';
@@ -247,12 +232,12 @@ const OperationalExpensesBreakdown = ({
             <div>
                 {label && <label className="block text-[10px] uppercase font-bold text-gray-500 mb-0.5">{label}</label>}
                 <div className="relative">
-                    {!isPaxOrHours && <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-medium">{CURRENCY_SYMBOL}</span>}
+                    {!isPaxOrHours && <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-semibold">{CURRENCY_SYMBOL}</span>}
                     <input
                         type="number"
                         value={value || ''}
                         onChange={e => onChange(e.target.value)}
-                        className={`w-full text-right ${!isPaxOrHours ? 'pl-6' : 'pl-2'} pr-2 py-1 bg-gray-100 border border-gray-200 rounded text-xs font-semibold focus:outline-none focus:border-blue-400 text-gray-800`}
+                        className={`w-full text-right ${!isPaxOrHours ? 'pl-6' : 'pl-2'} pr-2 py-1.5 bg-white border-2 border-blue-300 rounded text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                         placeholder="0"
                     />
                 </div>
