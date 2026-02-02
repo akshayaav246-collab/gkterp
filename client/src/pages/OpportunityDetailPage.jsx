@@ -219,7 +219,7 @@ const OpportunityDetailPage = () => {
                     <VendorPayablesTab
                         ref={vendorPayablesRef}
                         opportunity={opportunity}
-                        canEdit={canEditDelivery}
+                        canEdit={canEditDelivery && isEditing}
                         isEditing={isEditing}
                         refreshData={fetchOpportunity}
                     />
