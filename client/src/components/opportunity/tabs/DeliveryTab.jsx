@@ -4,15 +4,25 @@ import { Upload, CheckCircle } from 'lucide-react';
 import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
 import UploadButton from '../../ui/UploadButton';
+import { useAuth } from '../../../context/AuthContext';
+import BillingDetails from '../sections/BillingDetails';
+import OperationalExpensesBreakdown from '../sections/OperationalExpensesBreakdown';
+import DeliveryDocuments from '../sections/DeliveryDocuments';
 
 const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }, ref) => {
     const { addToast } = useToast();
+    const { user } = useAuth();
     // vendors state removed
     const [smes, setSmes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [expenseUploading, setExpenseUploading] = useState(null);
 
     const [formData, setFormData] = useState({});
+
+    // Derived state
+    const isDeliveryRole = ['Delivery Team', 'Delivery Head', 'Delivery Manager'].includes(user?.role);
+    const activeData = isEditing ? formData : opportunity;
 
     // Fetch Vendors and SMEs
     useEffect(() => {
@@ -182,6 +192,36 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
             addToast(errorMessage, 'error');
         } finally {
             setUploading(false);
+        }
+    };
+
+    // Generic upload handler for expenses (for Delivery Team view)
+    const handleProposalUpload = async (e, expenseKey) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setExpenseUploading(expenseKey);
+        try {
+            const token = localStorage.getItem('token');
+            const uploadFormData = new FormData();
+
+            // Use 'document' as field name matching backend
+            uploadFormData.append('document', file);
+            uploadFormData.append('category', expenseKey);
+
+            await axios.post(
+                `http://localhost:5000/api/opportunities/${opportunity._id}/upload-expense-doc`,
+                uploadFormData,
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+            );
+
+            addToast('Document uploaded successfully', 'success');
+            refreshData();
+        } catch (error) {
+            console.error('Upload failed', error);
+            addToast('Failed to upload proposal', 'error');
+        } finally {
+            setExpenseUploading(null);
         }
     };
 
@@ -438,198 +478,37 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                 </div>
             </Card>
 
-            {/* 4. Billing Details */}
-            <Card>
-                <h3 className="text-lg font-bold text-primary-blue mb-4">Billing Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Operational Expenses Breakdown (Only for Delivery Team) */}
+            {isDeliveryRole && (
+                <OperationalExpensesBreakdown
+                    activeData={activeData}
+                    handleChange={handleChange}
+                    handleProposalUpload={handleProposalUpload}
+                    uploading={expenseUploading}
+                    isEditing={isEditing}
+                    canEdit={isEditing}
+                    opportunity={opportunity}
+                />
+            )}
 
-                    {/* 1. PO Details */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-900 mb-3 border-b pb-1">PO Details</label>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Number</label>
-                                <input
-                                    type="text"
-                                    value={opportunity.commonDetails?.clientPONumber || 'N/A'}
-                                    disabled
-                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Date</label>
-                                <input
-                                    type="text"
-                                    value={opportunity.commonDetails?.clientPODate ? new Date(opportunity.commonDetails.clientPODate).toLocaleDateString() : 'N/A'}
-                                    disabled
-                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Amount</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2 text-gray-500 text-sm">₹</span>
-                                    <input
-                                        type="text"
-                                        value={opportunity.poValue ? opportunity.poValue.toLocaleString() : '0'}
-                                        disabled
-                                        className="w-full border p-2 pl-6 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">PO Document</label>
-                                <div className="flex items-center p-2 border border-gray-100 rounded-lg bg-gray-50 h-[38px]">
-                                    {opportunity.poDocument ? (
-                                        <a
-                                            href={`http://localhost:5000/${opportunity.poDocument.replace(/\\/g, '/')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline flex items-center text-sm font-medium"
-                                        >
-                                            <CheckCircle size={14} className="mr-1" /> View PO
-                                        </a>
-                                    ) : (
-                                        <span className="text-gray-400 text-sm italic">Not Uploaded</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2. Invoice Details */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-900 mb-3 border-b pb-1">Invoice Details</label>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Number</label>
-                                <input
-                                    type="text"
-                                    value={formData.commonDetails?.clientInvoiceNumber || ''}
-                                    disabled
-                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
-                                    placeholder="N/A"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Date</label>
-                                <input
-                                    type="text"
-                                    value={formData.commonDetails?.clientInvoiceDate ? new Date(formData.commonDetails.clientInvoiceDate).toLocaleDateString() : ''}
-                                    disabled
-                                    className="w-full border p-2 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
-                                    placeholder="N/A"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Amount</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2 text-gray-500 text-sm">₹</span>
-                                    <input
-                                        type="text"
-                                        value={opportunity.invoiceValue ? opportunity.invoiceValue.toLocaleString() : '0'}
-                                        disabled
-                                        className="w-full border p-2 pl-6 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed text-sm"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Invoice Document</label>
-                                <div className="flex items-center space-x-2 h-[38px]">
-                                    {opportunity.invoiceDocument ? (
-                                        <a
-                                            href={`http://localhost:5000/${opportunity.invoiceDocument.replace(/\\/g, '/')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-green-600 text-xs font-bold flex items-center hover:underline"
-                                        >
-                                            <CheckCircle size={14} className="mr-1" /> View Invoice
-                                        </a>
-                                    ) : (
-                                        <span className="text-xs text-gray-400 italic">No File</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 3. Client Details */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-900 mb-3 border-b pb-1">Client Details</label>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Billing Client</label>
-                                <input
-                                    type="text"
-                                    value={formData.commonDetails?.billingClientName || ''}
-                                    onChange={(e) => handleChange('commonDetails', 'billingClientName', e.target.value)}
-                                    disabled={!isEditing}
-                                    className={inputClass}
-                                    placeholder="Enter Billing Client"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">End Client</label>
-                                <input
-                                    type="text"
-                                    value={formData.commonDetails?.endClientName || ''}
-                                    onChange={(e) => handleChange('commonDetails', 'endClientName', e.target.value)}
-                                    disabled={!isEditing}
-                                    className={inputClass}
-                                    placeholder="Enter End Client"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </Card>
+            {/* 4. Billing Details (Hidden for Delivery Team, Visible for Sales) */}
+            {!isDeliveryRole && (
+                <BillingDetails
+                    opportunity={opportunity}
+                    formData={formData}
+                    handleChange={handleChange}
+                    isEditing={isEditing}
+                    inputClass={inputClass}
+                />
+            )}
 
             {/* 5. Delivery Documents */}
-            <Card>
-                <h3 className="text-lg font-bold text-primary-blue mb-4">Delivery Documents</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {['attendance', 'feedback', 'assessment', 'performance'].map(docType => (
-                        <div key={docType} className="border border-gray-200 p-3 rounded-lg bg-gray-50 flex flex-col justify-between">
-                            <h4 className="font-semibold text-gray-700 capitalize text-sm mb-2">{docType}</h4>
-                            <div className="flex flex-col gap-2">
-                                {opportunity.deliveryDocuments?.[docType] ? (
-                                    <a
-                                        href={`http://localhost:5000/${opportunity.deliveryDocuments[docType].replace(/\\/g, '/')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-green-600 hover:underline flex items-center text-xs font-medium"
-                                    >
-                                        <CheckCircle size={14} className="mr-1" /> View
-                                    </a>
-                                ) : (
-                                    <span className="text-xs text-gray-400 italic">Not Uploaded</span>
-                                )}
-
-                                {canEdit && (
-                                    <div className="relative mt-1">
-                                        <input
-                                            type="file"
-                                            id={`doc-upload-${docType}`}
-                                            className="hidden"
-                                            onChange={(e) => handleDeliveryDocUpload(e, docType)}
-                                            accept=".pdf,.doc,.docx,.xlsx"
-                                            disabled={uploading}
-                                        />
-                                        <UploadButton
-                                            onClick={() => document.getElementById(`doc-upload-${docType}`).click()}
-                                            disabled={uploading}
-                                            className="w-full"
-                                        >
-                                            {opportunity.deliveryDocuments?.[docType] ? 'Replace' : 'Upload'}
-                                        </UploadButton>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </Card>
+            <DeliveryDocuments
+                opportunity={opportunity}
+                canEdit={canEdit}
+                handleUpload={handleDeliveryDocUpload}
+                uploading={uploading}
+            />
         </div>
     );
 });

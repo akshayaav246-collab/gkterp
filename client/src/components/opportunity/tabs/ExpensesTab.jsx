@@ -7,6 +7,9 @@ import UploadButton from '../../ui/UploadButton';
 import { useAuth } from '../../../context/AuthContext';
 import { useCurrency } from '../../../context/CurrencyContext';
 import AlertModal from '../../ui/AlertModal';
+import BillingDetails from '../sections/BillingDetails';
+import OperationalExpensesBreakdown from '../sections/OperationalExpensesBreakdown';
+import FinancialSummary from '../sections/FinancialSummary';
 
 const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }, ref) => {
     const { addToast } = useToast();
@@ -469,32 +472,87 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
 
     return (
         <div className="space-y-6">
-            {/* Grid Layout: Execution Details (Left) | Operational Expenses (Right) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Grid Layout: Sales gets OpEx/Billing (Left 2/3). Execution (Right 1/3). Delivery gets BillingDetails (Full) */}
+            <div className={`grid grid-cols-1 ${!isDelivery ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} gap-6`}>
 
-                {/* Left: Execution Details */}
-                <div className="lg:col-span-1">
-                    <Card className="h-full flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-primary-blue">Execution Details</h3>
+                {/* Left/Main Column: Operational Expenses (Sales) OR Billing Details (Delivery) */}
+                <div className={`${!isDelivery ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
+                    {/* Sales View: Operational Expenses */}
+                    {!isDelivery && (
+                        <OperationalExpensesBreakdown
+                            activeData={activeData}
+                            handleChange={handleChange}
+                            handleProposalUpload={handleProposalUpload}
+                            uploading={uploading}
+                            isEditing={isEditing}
+                            canEdit={canEditOpExpenses}
+                            opportunity={opportunity}
+                        />
+                    )}
+
+                    {/* Delivery View: Billing Details (Moved from Requirements) */}
+                    {isDelivery && (
+                        <div className="flex flex-col gap-6">
+                            <BillingDetails
+                                opportunity={opportunity}
+                                formData={formData}
+                                handleChange={handleChange}
+                                isEditing={isEditing}
+                                inputClass=""
+                            />
+                            <Card>
+                                <FinancialSummary
+                                    opportunity={activeData}
+                                    poValue={activeData.poValue}
+                                />
+                            </Card>
                         </div>
+                    )}
+                </div>
 
-                        {/* TOV Display Section (Automated) - Moved to Top */}
-                        <div className="bg-green-50 p-6 rounded-xl border border-green-200 mb-6">
-                            <div className="space-y-3">
-                                {/* Big Calculated Value */}
-                                <div className="text-center relative">
+                {/* Right Column: Execution Details (Hidden for Delivery) */}
+                {!isDelivery && (
+                    <div className="lg:col-span-1">
+                        <Card className="h-full flex flex-col">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-primary-blue">Execution Details</h3>
+                            </div>
+
+                            {/* Proposal Value - Restored */}
+                            <div className="bg-green-50 p-4 rounded-xl border border-green-200 mb-6">
+                                <div className="text-center">
                                     <label className="block text-xs font-bold text-green-700 uppercase tracking-wide mb-1">Proposal Value</label>
-                                    <div className="text-4xl font-extrabold text-green-700">
-                                        {CURRENCY_SYMBOL} {((formData.commonDetails?.tov || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                    <div className="text-3xl font-extrabold text-green-700">
+                                        {CURRENCY_SYMBOL} {((formData.commonDetails?.tov || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </div>
+                                </div>
+                            </div>
 
-                                    {/* Status Badge */}
-                                    {opportunity.approvalStatus && opportunity.approvalStatus !== 'Draft' && (
-                                        <div className="mt-2">
-                                            {(['Pending Manager', 'Pending Director', 'Pending'].includes(opportunity.approvalStatus) || opportunity.approvalStatus.toLowerCase().includes('pending')) && (
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
-                                                    Waiting for approval
+                            {/* Approval Status */}
+                            <div className="mb-6 pb-4 border-b border-gray-100">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm font-medium text-gray-500">Approval Status</span>
+                                    {opportunity.approvalStatus === 'Pending' || opportunity.approvalStatus?.includes('Pending') ? (
+                                        <div className="flex items-center space-x-2">
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                                {opportunity.approvalStatus}
+                                            </span>
+                                            {/* Allow Escalation if pending */}
+                                            {canEditExecution && (
+                                                <button
+                                                    onClick={() => handleEscalate('manual')}
+                                                    disabled={escalating}
+                                                    className="text-xs text-primary-blue hover:underline font-medium"
+                                                >
+                                                    {escalating ? 'Pushing...' : 'Resend'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            {opportunity.approvalStatus === 'Draft' && (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                                    Draft
                                                 </span>
                                             )}
                                             {opportunity.approvalStatus === 'Approved' && (
@@ -536,237 +594,97 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-4 flex-grow">
-                            {/* Calculation Controls */}
-                            <div className="grid grid-cols-1 gap-4">
-                                {/* GP Margin - Dropdown 1-30% */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Profit (%)</label>
-                                    <div className="flex space-x-2">
-                                        <select
-                                            value={formData.expenses?.targetGpPercent ?? 30}
-                                            onChange={(e) => handleGpChange(parseFloat(e.target.value))}
-                                            disabled={!canEditExecution}
-                                            className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-brand-blue'}`}
-                                        >
-                                            {Array.from({ length: 30 }, (_, i) => i + 1).map(p => (
-                                                <option key={p} value={p}>{p}%</option>
-                                            ))}
-                                        </select>
-                                        <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
-                                            {CURRENCY_SYMBOL} {(() => {
-                                                const tov = formData.commonDetails?.tov || 0;
-                                                // Recalculate basic expense just for display consistency
-                                                const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
-                                                    (parseFloat(activeData.expenses?.contingency) || 0) +
-                                                    (parseFloat(activeData.expenses?.marketing) || 0);
-                                                const profit = tov - totalExp;
-                                                return (profit / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
-                                            })()}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Contingency - Dropdown 1-20% */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contingency (%)</label>
-                                    <div className="flex space-x-2">
-                                        <select
-                                            value={formData.expenses?.contingencyPercent ?? 20}
-                                            onChange={(e) => handleContingencyChange(parseFloat(e.target.value))}
-                                            disabled={!canEditExecution}
-                                            className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
-                                        >
-                                            {Array.from({ length: 15 }, (_, i) => i + 1).map(p => (
-                                                <option key={p} value={p}>{p}%</option>
-                                            ))}
-                                        </select>
-                                        <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
-                                            {CURRENCY_SYMBOL} {((formData.expenses?.contingency || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Marketing */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Marketing (%)</label>
-                                    <div className="flex space-x-2">
-                                        <select
-                                            value={formData.expenses?.marketingPercent ?? 0}
-                                            onChange={(e) => handleChange('expenses', 'marketingPercent', parseFloat(e.target.value))}
-                                            disabled={!canEditExecution}
-                                            className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
-                                        >
-                                            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (
-                                                <option key={p} value={p}>{p}%</option>
-                                            ))}
-                                        </select>
-                                        <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
-                                            {CURRENCY_SYMBOL} {((formData.expenses?.marketing || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Total Expenses - Display Only */}
-                                <div className="mt-4 pt-4 border-t border-gray-100">
-                                    <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                        <span className="text-sm font-bold text-blue-800">Total Expenses</span>
-                                        <span className="text-lg font-extrabold text-blue-800">
-                                            {CURRENCY_SYMBOL} {(() => {
-                                                const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
-                                                    (parseFloat(activeData.expenses?.contingency) || 0) +
-                                                    (parseFloat(activeData.expenses?.marketing) || 0);
-                                                return (totalExp / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
-                                            })()}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                        </div>
-                    </Card>
-                </div>
-
-                {/* Right: Operational Expenses Breakdown Table */}
-                <div className="lg:col-span-2">
-                    <Card className="h-full flex flex-col">
-                        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-                            <h3 className="text-lg font-bold text-primary-blue">Operational Expenses Breakdown</h3>
-                        </div>
-
-                        <div className="flex-grow">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                                {expenseTypes.map(({ key, label, isCalculated }) => (
-                                    <div key={key} className="flex justify-between items-center group">
-                                        <span className="text-sm font-medium text-gray-900 w-1/3">{label}</span>
-
-                                        <div className="flex items-center justify-end space-x-4 w-2/3">
-                                            {/* Amount Input/Display */}
-                                            <div className="relative w-32">
-                                                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-900 font-bold text-sm">{CURRENCY_SYMBOL}</span>
-                                                <input
-                                                    type="number"
-                                                    value={((expenseValues[key] || 0) / CONVERSION_RATE).toFixed(0)}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value, 10);
-                                                        if (!isNaN(val)) {
-                                                            handleChange('expenses', key, val * CONVERSION_RATE);
-                                                        } else if (e.target.value === '') {
-                                                            handleChange('expenses', key, 0);
-                                                        }
-                                                    }}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === '.' || e.key === ',') {
-                                                            e.preventDefault();
-                                                        }
-                                                    }}
-                                                    disabled={!canEditOpExpenses || isCalculated}
-                                                    className={`w-full text-right bg-transparent border-none focus:ring-0 p-0 text-gray-900 font-bold text-sm ${!canEditOpExpenses ? 'cursor-not-allowed' : ''}`}
-                                                    placeholder="0"
-                                                />
-                                            </div>
-
-                                            {/* Actions */}
-                                            {/* Actions */}
-                                            <div className="flex items-center justify-end space-x-3">
-                                                {/* View Action - Eye Icon */}
-                                                {opportunity.expenseDocuments?.[key]?.length > 0 ? (
-                                                    <a
-                                                        href={`http://localhost:5000/${opportunity.expenseDocuments[key][0].replace(/\\/g, '/')}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-primary-blue hover:text-blue-800 transition-colors"
-                                                        title="View Document"
-                                                    >
-                                                        <div className="p-2 hover:bg-blue-50 rounded-full">
-                                                            <Eye size={20} />
-                                                        </div>
-                                                    </a>
-                                                ) : (
-                                                    <div className="p-2" title="No Document">
-                                                        <Eye size={20} className="text-gray-300 cursor-default" />
-                                                    </div>
-                                                )}
-
-                                                {/* Upload Action - Only for Delivery/Admin */}
-                                                {canEditOpExpenses && (
-                                                    <div className="relative inline-block">
-                                                        <input
-                                                            type="file"
-                                                            id={`upload-${key}`}
-                                                            className="hidden"
-                                                            onChange={(e) => handleProposalUpload(e, key)}
-                                                            disabled={!canEditOpExpenses || uploading === key}
-                                                        />
-                                                        <UploadButton
-                                                            onClick={() => document.getElementById(`upload-${key}`).click()}
-                                                            disabled={!canEditOpExpenses || uploading === key}
-                                                        >
-                                                            {uploading === key ? '...' : (opportunity.expenseDocuments?.[key]?.length > 0 ? 'Replace' : 'Upload')}
-                                                        </UploadButton>
-                                                    </div>
-                                                )}
+                            <div className="space-y-4 flex-grow">
+                                {/* Calculation Controls */}
+                                <div className="grid grid-cols-1 gap-4">
+                                    {/* Profit (%) */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Profit (%)</label>
+                                        <div className="flex space-x-2">
+                                            <select
+                                                value={formData.expenses?.targetGpPercent ?? 30}
+                                                onChange={(e) => handleGpChange(parseFloat(e.target.value))}
+                                                disabled={!canEditExecution}
+                                                className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
+                                            >
+                                                {Array.from({ length: 30 }, (_, i) => i + 1).map(p => (
+                                                    <option key={p} value={p}>{p}%</option>
+                                                ))}
+                                            </select>
+                                            <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
+                                                {CURRENCY_SYMBOL} {(() => {
+                                                    const tov = formData.commonDetails?.tov || 0;
+                                                    const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
+                                                        (parseFloat(activeData.expenses?.contingency) || 0) +
+                                                        (parseFloat(activeData.expenses?.marketing) || 0);
+                                                    const profit = tov - totalExp;
+                                                    return (profit / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
 
+                                    {/* Contingency */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contingency (%)</label>
+                                        <div className="flex space-x-2">
+                                            <select
+                                                value={formData.expenses?.contingencyPercent ?? 20}
+                                                onChange={(e) => handleContingencyChange(parseFloat(e.target.value))}
+                                                disabled={!canEditExecution}
+                                                className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
+                                            >
+                                                {Array.from({ length: 15 }, (_, i) => i + 1).map(p => (
+                                                    <option key={p} value={p}>{p}%</option>
+                                                ))}
+                                            </select>
+                                            <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
+                                                {CURRENCY_SYMBOL} {((formData.expenses?.contingency || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                            </div>
+                                        </div>
+                                    </div>
 
+                                    {/* Marketing */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Marketing (%)</label>
+                                        <div className="flex space-x-2">
+                                            <select
+                                                value={formData.expenses?.marketingPercent ?? 0}
+                                                onChange={(e) => handleChange('expenses', 'marketingPercent', parseFloat(e.target.value))}
+                                                disabled={!canEditExecution}
+                                                className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
+                                            >
+                                                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (
+                                                    <option key={p} value={p}>{p}%</option>
+                                                ))}
+                                            </select>
+                                            <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
+                                                {CURRENCY_SYMBOL} {((formData.expenses?.marketing || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                            </div>
+                                        </div>
+                                    </div>
 
-                        {/* NEW: Financial Summary Block (Visible for Delivery/Admin) */}
-                        {canEditOpExpenses && (
-                            <div className="mt-8 pt-6 border-t border-gray-200">
-                                <h4 className="text-lg font-bold text-gray-900 mb-4">Financial Summary (Delivery)</h4>
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO Amount</th>
-                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Expense</th>
-                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketing</th>
-                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GK Revenue (Profit)</th>
-                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GP %</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            <tr>
-                                                <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">
-                                                    {CURRENCY_SYMBOL} {(tov / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                                    {CURRENCY_SYMBOL} {(totalExpenses / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                                    {CURRENCY_SYMBOL} {((activeData.expenses?.marketing || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-green-600">
-                                                    {CURRENCY_SYMBOL} {(gktRevenue / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-blue-600">
-                                                    {gpPercentage}%
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    {/* Total Expenses - Display Only */}
+                                    <div className="mt-4 pt-4 border-t border-gray-100">
+                                        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                            <span className="text-sm font-bold text-blue-800">Total Expenses</span>
+                                            <span className="text-lg font-extrabold text-blue-800">
+                                                {CURRENCY_SYMBOL} {(() => {
+                                                    const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
+                                                        (parseFloat(activeData.expenses?.contingency) || 0) +
+                                                        (parseFloat(activeData.expenses?.marketing) || 0);
+                                                    return (totalExp / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                                                })()}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Total Footer */}
-                        <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
-                            <h4 className="text-lg font-bold text-gray-900">Total Operational Expenses</h4>
-                            <div className="text-xl font-bold text-gray-900">
-                                {CURRENCY_SYMBOL} {(opExTotal / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-            </div >
+                        </Card>
+                    </div>
+                )}
+            </div>
 
             <AlertModal
                 isOpen={alertConfig.isOpen}
@@ -777,7 +695,7 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
                 type={alertConfig.type}
                 confirmText="Send for Approval"
             />
-        </div >
+        </div>
     );
 });
 

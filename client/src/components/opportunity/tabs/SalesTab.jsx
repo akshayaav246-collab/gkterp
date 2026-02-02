@@ -5,6 +5,7 @@ import Card from '../../ui/Card';
 import { useToast } from '../../../context/ToastContext';
 
 import SearchableSelect from '../../ui/SearchableSelect';
+import DeliveryDocuments from '../sections/DeliveryDocuments';
 
 const TECHNOLOGIES = ['IBM', 'Red hat', 'Microsoft', 'Blockchain', 'Tableau', 'Mulesoft', 'AI alliance', 'Trending technologies'];
 
@@ -503,8 +504,64 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
                             />
                         </div>
                     </div>
+                    {/* SME Details Merged into Trainer Details */}
+                    {(formData.selectedSME || formData.commonDetails?.trainingSupporter) && (
+                        <React.Fragment>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Assigned SME</label>
+                                <div className="p-2 bg-gray-50 rounded border border-gray-200 text-sm font-medium text-gray-800">
+                                    {typeof opportunity.selectedSME === 'object' ? opportunity.selectedSME.name : 'SME Assigned'}
+                                </div>
+                            </div>
+
+                            {/* Content Document (from Delivery Upload) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Content Document</label>
+                                {opportunity.deliveryDocuments?.sme_profile ? (
+                                    <a
+                                        href={`http://localhost:5000/${opportunity.deliveryDocuments.sme_profile.replace(/\\/g, '/')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-blue-600 hover:text-blue-800 hover:border-blue-300 transition-colors"
+                                        title="View Content Document"
+                                    >
+                                        <CheckCircle size={14} /> View Content
+                                    </a>
+                                ) : (
+                                    <span className="text-sm text-gray-400 italic p-2 block">Not Uploaded</span>
+                                )}
+                            </div>
+
+                            {/* Profile Document (from SME Details) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">SME Profile</label>
+                                {typeof opportunity.selectedSME === 'object' && opportunity.selectedSME.contentUpload ? (
+                                    <a
+                                        href={`http://localhost:5000/${opportunity.selectedSME.contentUpload.replace(/\\/g, '/')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-purple-600 hover:text-purple-800 hover:border-purple-300 transition-colors"
+                                        title="View SME Profile"
+                                    >
+                                        <CheckCircle size={14} /> View Profile
+                                    </a>
+                                ) : (
+                                    <span className="text-sm text-gray-400 italic p-2 block">Not Available</span>
+                                )}
+                            </div>
+                        </React.Fragment>
+                    )}
                 </div>
             </Card >
+
+            {/* Delivery Documents (Read Only for Sales) */}
+            <DeliveryDocuments
+                opportunity={opportunity}
+                canEdit={false}
+                handleUpload={() => { }}
+                uploading={false}
+                isSalesView={true}
+            />
 
         </div >
     );

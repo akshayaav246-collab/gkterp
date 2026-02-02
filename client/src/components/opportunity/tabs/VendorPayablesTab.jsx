@@ -496,7 +496,7 @@ const ExpenseRow = ({
                                 <option value="IGST-18%">IGST-18%</option>
                                 <option value="CGST-9%">CGST-9%</option>
                                 <option value="SGST-9%">SGST-9%</option>
-                                <option value="CGST+SGST-18%">CGST+SGST-18%</option>
+                                <option value="CGST(9%)+SGST(9%)-18%">CGST(9%)+SGST(9%)-18%</option>
                             </select>
                         </div>
                         <div>

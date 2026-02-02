@@ -317,7 +317,7 @@ const OpportunityDetailPage = () => {
                             className={`px-6 py-4 text-sm font-medium focus:outline-none transition-all ${activeTab === 'expenses' ? 'bg-white text-blue-700 border-b-2 border-blue-600 font-bold' : 'text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:bg-gray-50'}`}
                             onClick={() => handleTabChange('expenses')}
                         >
-                            {['Delivery Team', 'Delivery Head', 'Delivery Manager'].includes(user?.role) ? 'Expenses' : 'Proposal Calculations'}
+                            {isDeliveryRole ? 'Billing' : 'Proposal Calculations'}
                         </button>
                         {showVendorPayablesTab && (
                             <button
@@ -379,7 +379,7 @@ const OpportunityDetailPage = () => {
                     {renderTabContent()}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

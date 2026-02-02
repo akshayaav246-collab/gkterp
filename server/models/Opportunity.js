@@ -242,7 +242,8 @@ const OpportunitySchema = new mongoose.Schema({
         contingency: { type: Number, default: 0 },
         marketingPercent: { type: Number, default: 0, min: 0, max: 100 }, // Default 0%
         contingencyPercent: { type: Number, default: 20, min: 0, max: 100 }, // Default 20%
-        targetGpPercent: { type: Number, default: 30, min: 0, max: 100 } // Added field
+        targetGpPercent: { type: Number, default: 30, min: 0, max: 100 }, // Added field
+        breakdown: { type: mongoose.Schema.Types.Mixed, default: {} } // Stores detailed breakdown (rates, types, etc.)
     },
 
     expenseDocuments: {

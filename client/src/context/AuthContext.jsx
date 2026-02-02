@@ -16,9 +16,19 @@ export const AuthProvider = ({ children }) => {
 
         if (storedUser && storedToken) {
             try {
-                setUser(JSON.parse(storedUser));
+                // Basic token expiry check (if JWT format)
+                const payload = JSON.parse(atob(storedToken.split('.')[1]));
+                const isExpired = payload.exp * 1000 < Date.now();
+
+                if (isExpired) {
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('token');
+                    setUser(null);
+                } else {
+                    setUser(JSON.parse(storedUser));
+                }
             } catch (e) {
-                console.error('Failed to parse stored user', e);
+                console.error('Failed to parse stored user or token', e);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
             }

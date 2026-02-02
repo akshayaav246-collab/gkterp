@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +30,11 @@ const DashboardPage = ({ mockRole }) => {
     if (user?.role === 'Sales Manager') {
         return <ManagerDashboard user={user} />;
     }
+
+    // Redirect other roles to their specific dashboards
+    if (user?.role === 'Director') return <Navigate to="/dashboard/businesshead" replace />;
+    if (user?.role === 'Delivery Team') return <Navigate to="/dashboard/delivery" replace />;
+    if (user?.role === 'Finance') return <Navigate to="/finance/dashboard" replace />;
 
     const [stats, setStats] = useState(null);
     const [opportunities, setOpportunities] = useState([]);
