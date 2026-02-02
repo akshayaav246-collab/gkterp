@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Eye } from 'lucide-react';
 import Card from '../../ui/Card';
 import { useCurrency } from '../../../context/CurrencyContext';
@@ -27,6 +27,7 @@ const OperationalExpensesBreakdown = ({
     const pax = opportunity.participants || 0;
 
     const [localBreakdown, setLocalBreakdown] = useState({});
+    const initializedTypes = useRef(new Set());
 
     // Sync local state on prop change
     useEffect(() => {
@@ -93,9 +94,9 @@ const OperationalExpensesBreakdown = ({
             ? (typeOptions.find(o => o.value === data.type)?.label || data.type)
             : (fixedTypeLabel ? fixedTypeLabel.replace('Fixed: ', '') : 'Fixed');
 
-        // Initialize type if missing (without useEffect to avoid re-renders)
-        if (!data.type && typeOptions && canEdit) {
-            // Use setTimeout to avoid state update during render
+        // Initialize type if missing (only once per category)
+        if (!data.type && typeOptions && canEdit && !initializedTypes.current.has(category)) {
+            initializedTypes.current.add(category);
             setTimeout(() => {
                 updateBreakdown(category, 'type', typeOptions[0].value);
             }, 0);
@@ -224,20 +225,19 @@ const OperationalExpensesBreakdown = ({
     };
 
     const Input = ({ label, value, onChange }) => {
-        const isPaxOrHours = label.toLowerCase().includes('pax') || label.toLowerCase().includes('hours');
-        const { currency } = useCurrency();
-        const CURRENCY_SYMBOL = currency === 'USD' ? '$' : '₹';
+        // Show currency for all Rate fields, hide only for Pax and Hours fields
+        const isNonCurrencyField = (label.toLowerCase() === 'pax' || label.toLowerCase() === 'hours' || label.toLowerCase() === 'hours/day');
 
         return (
             <div>
                 {label && <label className="block text-[10px] uppercase font-bold text-gray-500 mb-0.5">{label}</label>}
                 <div className="relative">
-                    {!isPaxOrHours && <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-semibold">{CURRENCY_SYMBOL}</span>}
+                    {!isNonCurrencyField && <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-semibold">{CURRENCY_SYMBOL}</span>}
                     <input
                         type="number"
                         value={value || ''}
                         onChange={e => onChange(e.target.value)}
-                        className={`w-full text-right ${!isPaxOrHours ? 'pl-6' : 'pl-2'} pr-2 py-1.5 bg-white border-2 border-blue-300 rounded text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                        className={`w-full text-right ${!isNonCurrencyField ? 'pl-6' : 'pl-2'} pr-2 py-1.5 bg-white border-2 border-blue-300 rounded text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                         placeholder="0"
                     />
                 </div>
@@ -286,6 +286,10 @@ const OperationalExpensesBreakdown = ({
                     {renderInputGroup('perDiem', 'Per Diem', null, 'Fixed: Cost / Day')}
 
                     {/* 7-10. Other Expenses (Venue, Travel, Vouchers, Local Conveyance) */}
+                </div>
+
+                {/* Other Expenses Row - 4 columns in edit mode, 5-column flow in view mode */}
+                <div className={`grid gap-4 ${canEdit ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-flow-col grid-rows-5 auto-cols-fr'} mt-4`}>
                     {['venue', 'travel', 'vouchersCost', 'localConveyance'].map(key => (
                         <div key={key} className={`bg-white border border-gray-200 rounded-lg ${!canEdit ? 'p-2' : 'p-3'}`}>
                             <div className={`flex justify-between items-center ${!canEdit ? 'mb-1' : 'mb-2'}`}>
