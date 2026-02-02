@@ -96,35 +96,39 @@ const OperationalExpensesBreakdown = ({
             }
         }, []);
 
+        const typeLabel = typeOptions
+            ? (typeOptions.find(o => o.value === data.type)?.label || data.type)
+            : (fixedTypeLabel ? fixedTypeLabel.replace('Fixed: ', '') : 'Fixed');
+
         return (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4 last:mb-0">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="font-bold text-gray-800 text-sm">{label}</span>
-                    <span className="font-bold text-primary-blue text-sm">
+            <div className={`bg-gray-50 border border-gray-200 rounded-lg ${!canEdit ? 'p-2' : 'p-3'} mb-4 last:mb-0`}>
+                <div className={`flex justify-between items-center ${!canEdit ? 'mb-1' : 'mb-2'}`}>
+                    <span className={`font-bold text-gray-800 ${!canEdit ? 'text-xs' : 'text-sm'}`}>{label}</span>
+                    <span className={`font-bold text-primary-blue ${!canEdit ? 'text-xs' : 'text-sm'}`}>
                         {CURRENCY_SYMBOL} {(currentTotal / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </span>
                 </div>
 
-                {/* Type Selection (Dropdown or Fixed Label) */}
-                <div className="mb-2">
-                    {typeOptions ? (
-                        <select
-                            value={selectedType}
-                            onChange={(e) => updateBreakdown(category, 'type', e.target.value)}
-                            disabled={!canEdit}
-                            className="w-full text-xs p-1.5 border border-gray-300 rounded bg-white text-gray-700 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                        >
-                            {typeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                        </select>
-                    ) : (
-                        <div className="text-xs text-gray-500 italic border-b border-gray-200 pb-1 mb-1">{fixedTypeLabel}</div>
-                    )}
-                </div>
+                {/* Type Selection (Dropdown or Fixed Label) - Only for Edit Mode */}
+                {canEdit && (
+                    <div className="mb-2">
+                        {typeOptions ? (
+                            <select
+                                value={selectedType}
+                                onChange={(e) => updateBreakdown(category, 'type', e.target.value)}
+                                className="w-full text-xs p-1.5 border border-gray-300 rounded bg-white text-gray-700 focus:outline-none focus:border-blue-500"
+                            >
+                                {typeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        ) : (
+                            <div className="text-xs text-gray-500 italic border-b border-gray-200 pb-1 mb-1">{fixedTypeLabel}</div>
+                        )}
+                    </div>
+                )}
 
-                {/* Dynamic Inputs grid */}
+                {/* Dynamic Inputs grid - Edit Mode */}
                 {canEdit ? (
                     <div className="grid grid-cols-2 gap-2">
-                        {/* Render based on selectedType */}
                         {/* Trainer Logic */}
                         {category === 'trainerCost' && (
                             <>
@@ -181,71 +185,54 @@ const OperationalExpensesBreakdown = ({
                                 <div className="col-span-2"><Input label={category === 'gkRoyalty' ? 'Rate / Pax / Day' : 'Rate / Day'} value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
                             </>
                         )}
-
-                        {/* Catch-all for others (Travel, Venue, Vouchers, Local Conveyance) if needed later. 
-                            For now, keeping them simple or letting them be 0 as per user request scope, 
-                            but standardizing input if user wants to use them.
-                        */}
                     </div>
                 ) : (
-                    // Read Only View for Sales - Compact
-                    <div className="text-xs text-gray-500 flex flex-col gap-0.5 mt-1">
-                        {/* Type/Variant */}
-                        <div className="flex justify-between">
-                            <span>Type:</span>
-                            <span className="font-medium text-gray-700">
-                                {typeOptions ? typeOptions.find(o => o.value === data.type)?.label || data.type : (fixedTypeLabel ? fixedTypeLabel.replace('Fixed: ', '') : 'Fixed')}
-                            </span>
-                        </div>
-                        {/* Rate */}
-                        {data.rate > 0 && (
-                            <div className="flex justify-between">
-                                <span>Rate:</span>
-                                <span className="font-medium text-gray-700">{CURRENCY_SYMBOL} {Number(data.rate).toLocaleString()}</span>
-                            </div>
-                        )}
-                        {/* Optional extra fields if relevant */}
-                        {data.hours > 0 && <div className="flex justify-between"><span>Hours:</span><span className="font-medium text-gray-700">{data.hours}</span></div>}
-                        {data.pax > 0 && <div className="flex justify-between"><span>Pax:</span><span className="font-medium text-gray-700">{data.pax}</span></div>}
+                    // Read Only View - Compact single line format
+                    <div className="flex justify-between items-center text-[11px] text-gray-600">
+                        <span className="text-gray-500">{typeLabel}</span>
+                        <span className="font-medium text-gray-800">
+                            {CURRENCY_SYMBOL} {Number(data.rate || 0).toLocaleString()}
+                        </span>
                     </div>
                 )}
 
                 {/* Footer: Upload (Delivery) or View (Sales) */}
-                <div className="flex justify-end mt-1 pt-1 border-t border-gray-100">
-                    <div className="flex items-center space-x-2">
-                        {opportunity.expenseDocuments?.[category]?.length > 0 && (
-                            <a
-                                href={`http://localhost:5000/${opportunity.expenseDocuments[category][0].replace(/\\/g, '/')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-400 hover:text-primary-blue"
-                                title="View Document"
-                            >
-                                <Eye size={16} />
-                            </a>
-                        )}
-                        {/* IMPORTANT: Only allow upload if canEdit (Delivery) */}
-                        {isEditing && canEdit && (
-                            <>
-                                <input
-                                    type="file"
-                                    id={`upload-${category}`}
-                                    className="hidden"
-                                    onChange={(e) => handleProposalUpload(e, category)}
-                                    disabled={uploading === category}
-                                />
-                                <button
-                                    onClick={() => document.getElementById(`upload-${category}`).click()}
-                                    disabled={uploading === category}
-                                    className="transition-colors text-gray-400 hover:text-primary-blue"
-                                    title="Upload Document"
+                {(canEdit || opportunity.expenseDocuments?.[category]?.length > 0) && (
+                    <div className={`flex justify-end ${!canEdit ? 'mt-1 pt-1' : 'mt-1 pt-1'} border-t border-gray-100`}>
+                        <div className="flex items-center space-x-2">
+                            {opportunity.expenseDocuments?.[category]?.length > 0 && (
+                                <a
+                                    href={`http://localhost:5000/${opportunity.expenseDocuments[category][0].replace(/\\/g, '/')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-gray-400 hover:text-primary-blue"
+                                    title="View Document"
                                 >
-                                    <Upload size={14} />
-                                </button>
-                            </>
-                        )}
+                                    <Eye size={14} />
+                                </a>
+                            )}
+                            {isEditing && canEdit && (
+                                <>
+                                    <input
+                                        type="file"
+                                        id={`upload-${category}`}
+                                        className="hidden"
+                                        onChange={(e) => handleProposalUpload(e, category)}
+                                        disabled={uploading === category}
+                                    />
+                                    <button
+                                        onClick={() => document.getElementById(`upload-${category}`).click()}
+                                        disabled={uploading === category}
+                                        className="transition-colors text-gray-400 hover:text-primary-blue"
+                                        title="Upload Document"
+                                    >
+                                        <Upload size={14} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         );
     };
@@ -315,18 +302,17 @@ const OperationalExpensesBreakdown = ({
 
                     {/* 7-10. Other Expenses (Venue, Travel, Vouchers, Local Conveyance) */}
                     {['venue', 'travel', 'vouchersCost', 'localConveyance'].map(key => (
-                        <div key={key} className="bg-white border border-gray-200 rounded-lg p-3">
-                            <div className="flex justify-between items-center mb-2">
-                                {/* Display Name: Format camelCase to Title Case (e.g., localConveyance -> Local Conveyance) */}
-                                <span className="font-bold text-gray-600 text-sm capitalize">
+                        <div key={key} className={`bg-white border border-gray-200 rounded-lg ${!canEdit ? 'p-2' : 'p-3'}`}>
+                            <div className={`flex justify-between items-center ${!canEdit ? 'mb-1' : 'mb-2'}`}>
+                                <span className={`font-bold text-gray-600 ${!canEdit ? 'text-xs' : 'text-sm'} capitalize`}>
                                     {key.replace('Cost', '').replace(/([A-Z])/g, ' $1').trim()}
                                 </span>
-                                <span className="font-bold text-gray-800 text-sm">
+                                <span className={`font-bold text-gray-800 ${!canEdit ? 'text-xs' : 'text-sm'}`}>
                                     {CURRENCY_SYMBOL} {((activeData.expenses?.[key] || 0) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                 </span>
                             </div>
 
-                            {/* Edit Input */}
+                            {/* Edit Input (Delivery Only) */}
                             {canEdit && (
                                 <Input label="Amount" value={(localBreakdown[key]?.rate || activeData.expenses?.[key] || 0) / (key === 'rate' ? 1 : CONVERSION_RATE)} onChange={v => {
                                     handleChange('expenses', key, v * CONVERSION_RATE);
@@ -335,50 +321,53 @@ const OperationalExpensesBreakdown = ({
                                 }} />
                             )}
 
-                            {/* Read Only View Details */}
+                            {/* Read Only View - Compact single line */}
                             {!canEdit && (
-                                <div className="text-xs text-gray-600 space-y-1 mt-1">
-                                    <div className="flex justify-between">
-                                        <span className="capitalize">Amount:</span>
-                                        <span className="font-medium">{CURRENCY_SYMBOL} {((activeData.expenses?.[key] || 0) / CONVERSION_RATE).toLocaleString()}</span>
-                                    </div>
+                                <div className="flex justify-between items-center text-[11px] text-gray-600">
+                                    <span className="text-gray-500">Adhoc</span>
+                                    <span className="font-medium text-gray-800">
+                                        {CURRENCY_SYMBOL} {((activeData.expenses?.[key] || 0) / CONVERSION_RATE).toLocaleString()}
+                                    </span>
                                 </div>
                             )}
 
                             {/* Document Upload / View */}
-                            <div className="flex justify-end mt-2 pt-2 border-t border-gray-100">
-                                <div className="flex items-center space-x-2">
-                                    {opportunity.expenseDocuments?.[key]?.length > 0 && (
-                                        <a
-                                            href={`http://localhost:5000/${opportunity.expenseDocuments[key][0].replace(/\\/g, '/')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-gray-400 hover:text-primary-blue"
-                                            title="View Document"
-                                        >
-                                            <Eye size={16} />
-                                        </a>
-                                    )}
-                                    {isEditing && (
-                                        <>
-                                            <input
-                                                type="file"
-                                                id={`upload-${key}`}
-                                                className="hidden"
-                                                onChange={(e) => handleProposalUpload(e, key)}
-                                                disabled={uploading === key}
-                                            />
-                                            <button
-                                                onClick={() => document.getElementById(`upload-${key}`).click()}
-                                                disabled={uploading === key}
-                                                className={`transition-colors ${activeData.expenses?.[key] ? 'text-gray-400 hover:text-primary-blue' : 'text-gray-300 cursor-not-allowed'}`}
+                            {(canEdit || opportunity.expenseDocuments?.[key]?.length > 0) && (
+                                <div className={`flex justify-end ${!canEdit ? 'mt-1 pt-1' : 'mt-2 pt-2'} border-t border-gray-100`}>
+                                    <div className="flex items-center space-x-2">
+                                        {opportunity.expenseDocuments?.[key]?.length > 0 && (
+                                            <a
+                                                href={`http://localhost:5000/${opportunity.expenseDocuments[key][0].replace(/\\/g, '/')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-gray-400 hover:text-primary-blue"
+                                                title="View Document"
                                             >
-                                                <Upload size={14} />
-                                            </button>
-                                        </>
-                                    )}
+                                                <Eye size={14} />
+                                            </a>
+                                        )}
+                                        {isEditing && canEdit && (
+                                            <>
+                                                <input
+                                                    type="file"
+                                                    id={`upload-${key}`}
+                                                    className="hidden"
+                                                    onChange={(e) => handleProposalUpload(e, key)}
+                                                    disabled={uploading === key}
+                                                />
+                                                <button
+                                                    onClick={() => document.getElementById(`upload-${key}`).click()}
+                                                    disabled={uploading === key}
+                                                    className="transition-colors text-gray-400 hover:text-primary-blue"
+                                                    title="Upload Document"
+                                                >
+                                                    <Upload size={14} />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     ))}
                 </div>
