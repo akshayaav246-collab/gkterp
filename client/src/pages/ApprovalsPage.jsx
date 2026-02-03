@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useToast } from '../context/ToastContext';
-import { CheckCircle, XCircle, Bell } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 import AlertModal from '../components/ui/AlertModal';
 
