@@ -31,6 +31,29 @@ const ClientPage = () => {
     const [selectedContact, setSelectedContact] = useState(null); // For contact detail modal
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCreator, setFilterCreator] = useState('');
+    const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+    const [duplicateClientData, setDuplicateClientData] = useState(null);
+
+    const checkDuplicate = async (name) => {
+        // Skip check if empty or if we are editing the same client and name hasn't changed (case insensitive)
+        if (!name) return;
+        if (selectedClient && selectedClient.companyName.toLowerCase() === name.toLowerCase()) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`http://localhost:5000/api/clients/check-duplicate?name=${encodeURIComponent(name)}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.data.exists) {
+                setDuplicateClientData(res.data.client);
+                setShowDuplicateWarning(true);
+            }
+        } catch (err) {
+            console.error('Error checking duplicate:', err);
+        }
+    };
+
 
     const [formData, setFormData] = useState({
         companyName: '',
@@ -290,6 +313,7 @@ const ClientPage = () => {
                                     name="companyName"
                                     value={formData.companyName}
                                     onChange={handleChange}
+                                    onBlur={(e) => checkDuplicate(e.target.value)}
                                     className="w-full bg-gray-50 border-0 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
                                     placeholder="Enter company name"
                                     required
@@ -607,6 +631,44 @@ const ClientPage = () => {
             </div>
 
             {/* Content Switcher */}
+            {/* Duplicate Warning Modal */}
+            {showDuplicateWarning && (
+                <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                        <div className="text-center">
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Duplicate Client Detected</h3>
+                            <p className="text-gray-600 mb-6 font-medium">
+                                The client already exists. Do you want to proceed further or just create another contact person under the same client?
+                            </p>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowDuplicateWarning(false);
+                                        // Proceed with new client
+                                    }}
+                                    className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                                >
+                                    Proceed with new client
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowDuplicateWarning(false);
+                                        setShowFormModal(false);
+                                        // Redirect to existing client details
+                                        if (duplicateClientData) {
+                                            openDetails(duplicateClientData);
+                                        }
+                                    }}
+                                    className="w-full py-2 px-4 bg-primary-blue text-white rounded-lg font-medium hover:bg-primary-blue-dark transition-colors"
+                                >
+                                    Add as contact person
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal for Create/Edit */}
             {showFormModal && renderForm(selectedClient ? 'Update Client' : 'Add New Client')}
 

@@ -21,9 +21,9 @@ const OperationalExpensesBreakdown = ({
     // Helper to access breakdown (with fallback)
     const getBreakdown = () => activeData.expenses?.breakdown || {};
 
-    // Helper accessors for days and pax from opportunity root
-    const days = opportunity.days || 0;
-    const pax = opportunity.participants || 0;
+    // Helper accessors for days and pax from activeData (for immediate reactivity) or opportunity
+    const days = activeData.days || activeData.commonDetails?.trainingDays || opportunity.days || opportunity.commonDetails?.trainingDays || 0;
+    const pax = activeData.participants || activeData.commonDetails?.totalParticipants || opportunity.participants || opportunity.commonDetails?.totalParticipants || 0;
 
     const [localBreakdown, setLocalBreakdown] = useState({});
     const initializedTypes = useRef(new Set());
@@ -34,6 +34,34 @@ const OperationalExpensesBreakdown = ({
             setLocalBreakdown(activeData.expenses.breakdown);
         }
     }, [activeData.expenses]);
+
+
+
+    // Auto-recalculate totals when Global dependencies (days, pax) change
+    useEffect(() => {
+        if (!localBreakdown || Object.keys(localBreakdown).length === 0) return;
+        if (!canEdit) return;
+
+        console.log('DEBUG: Recalculating expenses due to days/pax change. Days:', days, 'Pax:', pax);
+
+        const expCategories = [
+            'trainerCost', 'material', 'labs', 'gkRoyalty', 'accommodation', 'perDiem'
+        ];
+
+        expCategories.forEach(category => {
+            const data = localBreakdown[category];
+            if (data && data.type) {
+                // Determine if this category relies on days or pax
+                // This mimics calculateTotal logic but we just run it safely for all relevant ones
+                const newTotal = calculateTotal(category, data);
+                // Only update if value implies a change (check against activeData to avoid loops? No, handleChange is safe)
+                if (newTotal !== null && activeData.expenses?.[category] !== newTotal * CONVERSION_RATE) {
+                    handleChange('expenses', category, newTotal * CONVERSION_RATE);
+                }
+            }
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [days, pax, localBreakdown]); // converting localBreakdown dependency is safe if we want to sync calculations
 
     const updateBreakdown = (category, fieldOrUpdates, value) => {
         if (!canEdit) return;

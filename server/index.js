@@ -54,4 +54,32 @@ app.get('/', (req, res) => {
     res.send('ERP API Running');
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173", // Allow Client URL
+        methods: ["GET", "POST"]
+    }
+});
+
+// Store io instance for use in routes
+app.set('io', io);
+global.io = io; // Expose globally for Model hooks
+
+io.on('connection', (socket) => {
+    // console.log('A user connected:', socket.id);
+
+    socket.on('join_room', (userId) => {
+        socket.join(userId);
+        // console.log(`User ${userId} joined room`);
+    });
+
+    socket.on('disconnect', () => {
+        // console.log('User disconnected:', socket.id);
+    });
+});
+
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

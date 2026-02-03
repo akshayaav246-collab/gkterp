@@ -11,7 +11,7 @@ import BillingDetails from '../sections/BillingDetails';
 import OperationalExpensesBreakdown from '../sections/OperationalExpensesBreakdown';
 import FinancialSummary from '../sections/FinancialSummary';
 
-const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }, ref) => {
+const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }, ref) => {
     const { addToast } = useToast();
     const { user } = useAuth();
     const { currency } = useCurrency();
@@ -699,4 +699,4 @@ const ExpensesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
     );
 });
 
-export default ExpensesTab;
+export default BillingTab;

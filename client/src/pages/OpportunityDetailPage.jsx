@@ -9,7 +9,7 @@ import { useToast } from '../context/ToastContext';
 import OverviewTab from '../components/opportunity/tabs/OverviewTab';
 import SalesTab from '../components/opportunity/tabs/SalesTab';
 import DeliveryTab from '../components/opportunity/tabs/DeliveryTab';
-import ExpensesTab from '../components/opportunity/tabs/ExpensesTab';
+import BillingTab from '../components/opportunity/tabs/BillingTab';
 import RevenueTab from '../components/opportunity/tabs/RevenueTab';
 import VendorPayablesTab from '../components/opportunity/tabs/VendorPayablesTab';
 import { useCurrency } from '../context/CurrencyContext';
@@ -33,7 +33,7 @@ const OpportunityDetailPage = () => {
     // Refs for tabs to call their internal save/cancel methods
     const salesRef = useRef();
     const deliveryRef = useRef();
-    const expensesRef = useRef();
+    const billingRef = useRef();
     const revenueRef = useRef();
     const vendorPayablesRef = useRef();
 
@@ -63,7 +63,7 @@ const OpportunityDetailPage = () => {
     const isCurrentTabEditable = () => {
         if (activeTab === 'sales') return canEditSales;
         if (activeTab === 'delivery') return canEditDelivery;
-        if (activeTab === 'expenses') return canEditDelivery || canEditSales;
+        if (activeTab === 'billing') return canEditDelivery || canEditSales;
         if (activeTab === 'vendor') return canEditDelivery;
         if (activeTab === 'revenue') return canEditSales;
         return false;
@@ -132,8 +132,8 @@ const OpportunityDetailPage = () => {
                 success = await salesRef.current.handleSave();
             } else if (activeTab === 'delivery' && deliveryRef.current) {
                 success = await deliveryRef.current.handleSave();
-            } else if (activeTab === 'expenses' && expensesRef.current) {
-                success = await expensesRef.current.handleSave();
+            } else if (activeTab === 'billing' && billingRef.current) {
+                success = await billingRef.current.handleSave();
             } else if (activeTab === 'revenue' && revenueRef.current) {
                 success = await revenueRef.current.handleSave();
             } else if (activeTab === 'vendor' && vendorPayablesRef.current) {
@@ -156,8 +156,8 @@ const OpportunityDetailPage = () => {
             salesRef.current.handleCancel();
         } else if (activeTab === 'delivery' && deliveryRef.current) {
             deliveryRef.current.handleCancel();
-        } else if (activeTab === 'expenses' && expensesRef.current) {
-            expensesRef.current.handleCancel();
+        } else if (activeTab === 'billing' && billingRef.current) {
+            billingRef.current.handleCancel();
         } else if (activeTab === 'revenue' && revenueRef.current) {
             revenueRef.current.handleCancel();
         } else if (activeTab === 'vendor' && vendorPayablesRef.current) {
@@ -204,10 +204,10 @@ const OpportunityDetailPage = () => {
                         refreshData={fetchOpportunity}
                     />
                 );
-            case 'expenses':
+            case 'billing':
                 return (
-                    <ExpensesTab
-                        ref={expensesRef}
+                    <BillingTab
+                        ref={billingRef}
                         opportunity={opportunity}
                         canEdit={canEditDelivery || canEditSales} // Both can edit, specific sections restricted inside
                         isEditing={isEditing}
@@ -314,8 +314,8 @@ const OpportunityDetailPage = () => {
                             </button>
                         )}
                         <button
-                            className={`px-6 py-4 text-sm font-medium focus:outline-none transition-all ${activeTab === 'expenses' ? 'bg-white text-blue-700 border-b-2 border-blue-600 font-bold' : 'text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:bg-gray-50'}`}
-                            onClick={() => handleTabChange('expenses')}
+                            className={`px-6 py-4 text-sm font-medium focus:outline-none transition-all ${activeTab === 'billing' ? 'bg-white text-blue-700 border-b-2 border-blue-600 font-bold' : 'text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:bg-gray-50'}`}
+                            onClick={() => handleTabChange('billing')}
                         >
                             {isDeliveryRole ? 'Billing' : 'Proposal Calculations'}
                         </button>

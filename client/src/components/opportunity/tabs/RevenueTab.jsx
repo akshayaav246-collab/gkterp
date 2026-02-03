@@ -99,8 +99,12 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
             if (type === 'po') {
                 specificTypFormData.append('po', file);
                 // Append required fields for PO upload
-                if (formData.poValue) specificTypFormData.append('poValue', formData.poValue);
-                if (formData.poDate) specificTypFormData.append('poDate', formData.poDate);
+                // Use formData if edited, otherwise fallback to opportunity data
+                const poVal = formData.poValue !== undefined && formData.poValue !== '' ? formData.poValue : (opportunity.poValue || 0);
+                const poDt = formData.poDate ? formData.poDate : (opportunity.commonDetails?.clientPODate || '');
+
+                specificTypFormData.append('poValue', poVal);
+                specificTypFormData.append('poDate', poDt);
             } else {
                 specificTypFormData.append('invoice', file);
             }
@@ -242,7 +246,7 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
                                         <span className="text-xs text-gray-400 italic">No Doc</span>
                                     )}
 
-                                    {canEdit && (
+                                    {canEdit && isEditing && (
                                         <div>
                                             <input
                                                 type="file"
@@ -322,7 +326,7 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
                                         <span className="text-xs text-gray-400 italic">No Doc</span>
                                     )}
 
-                                    {canEdit && !isSales && (
+                                    {canEdit && isEditing && !isSales && (
                                         <div>
                                             <input
                                                 type="file"

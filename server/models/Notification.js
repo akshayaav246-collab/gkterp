@@ -23,8 +23,7 @@ const NotificationSchema = new mongoose.Schema({
         type: String
     },
     documentType: {
-        type: String,
-        enum: ['Proposal', 'PO', 'Invoice', 'Other']
+        type: String
     },
     triggeredBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -54,6 +53,19 @@ const NotificationSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    }
+});
+
+// Auto-emit notification via Socket.io after saving
+NotificationSchema.post('save', function (doc) {
+    if (global.io) {
+        try {
+            // Emit to specific user room (using recipientId)
+            global.io.to(doc.recipientId.toString()).emit('notification_received', doc);
+            // console.log(`Socket Emitted to ${doc.recipientId}`);
+        } catch (error) {
+            console.error('Socket Emission Failed:', error);
+        }
     }
 });
 

@@ -11,6 +11,67 @@ const multer = require('multer');
 const path = require('path');
 
 // File Upload Config
+const uploadNotificationBuffer = new Map();
+
+// Helper to process buffered notifications
+async function processBufferedNotifications(oppId) {
+    if (!uploadNotificationBuffer.has(oppId)) return;
+
+    const data = uploadNotificationBuffer.get(oppId);
+    uploadNotificationBuffer.delete(oppId); // Remove immediately to prevent double firing
+
+    try {
+        const types = Array.from(data.types);
+        const coreDocs = ['attendance', 'feedback', 'assessment', 'performance'];
+        const hasAllCore = coreDocs.every(d => data.types.has(d));
+
+        let message = "";
+
+        if (hasAllCore && types.length === 4) {
+            message = `Delivery documents uploaded by ${data.userName} for ${data.oppNumber}`;
+        } else {
+            // Format list: A, B, and C
+            const formattedTypes = types.map(t => {
+                if (t === 'sme_profile') return 'SME Profile';
+                return t.charAt(0).toUpperCase() + t.slice(1).replace('_', ' ');
+            });
+
+            if (formattedTypes.length === 1) {
+                // Single doc logic
+                message = `${formattedTypes[0]} document uploaded by ${data.userName} for ${data.oppNumber}`;
+                if (types[0] === 'attendance' || types[0] === 'performance') {
+                    message = `The ${types[0]} document has been uploaded by ${data.userName} for ${data.oppNumber}`;
+                }
+            } else {
+                // Multiple docs logic
+                if (formattedTypes.length === 2) {
+                    message = `${formattedTypes[0]} and ${formattedTypes[1]} documents uploaded by ${data.userName} for ${data.oppNumber}`;
+                } else {
+                    const last = formattedTypes.pop();
+                    message = `${formattedTypes.join(', ')} and ${last} documents uploaded by ${data.userName} for ${data.oppNumber}`;
+                }
+            }
+        }
+
+        if (message && data.recipientId) {
+            const Notification = require('../models/Notification');
+            await Notification.create({
+                recipientId: data.recipientId,
+                type: 'document_upload',
+                message: message,
+                opportunityId: data.oppId,
+                opportunityNumber: data.oppNumber,
+                documentType: types.join(','),
+                triggeredBy: data.userId,
+                triggeredByName: data.userName,
+                targetTab: 'delivery'
+            });
+        }
+    } catch (err) {
+        console.error('Error processing buffered notifications:', err);
+    }
+}
+
 const storage = multer.diskStorage({
     destination(req, file, cb) {
         cb(null, 'uploads/');
@@ -99,6 +160,7 @@ router.post('/', protect, authorize('Sales Executive', 'Sales Manager'), async (
         });
 
         // NOTIFICATION: Notify Delivery Team about new opportunity
+        // Target: All "Delivery Team" users (as "concerned" users are not yet assigned)
         try {
             const deliveryTeam = await User.find({ role: 'Delivery Team' });
             const notifications = deliveryTeam.map(user => ({
@@ -116,7 +178,6 @@ router.post('/', protect, authorize('Sales Executive', 'Sales Manager'), async (
             }
         } catch (notifErr) {
             console.error('Notification error:', notifErr);
-            // Don't fail the request if notification fails
         }
 
         res.status(201).json(opportunity);
@@ -252,6 +313,10 @@ router.put('/:id', protect, async (req, res) => {
             }
         }
 
+        // Capture original state before updates for notification comparison
+        const originalExpenses = JSON.parse(JSON.stringify(opportunity.expenses || {}));
+        const originalCommonDetails = JSON.parse(JSON.stringify(opportunity.commonDetails || {}));
+
         // Apply updates
         Object.keys(updates).forEach(key => {
             if (key.includes('.')) {
@@ -259,9 +324,13 @@ router.put('/:id', protect, async (req, res) => {
                 const keys = key.split('.');
                 let current = opportunity;
                 for (let i = 0; i < keys.length - 1; i++) {
+                    if (!current[keys[i]]) current[keys[i]] = {}; // Safety init
                     current = current[keys[i]];
                 }
                 current[keys[keys.length - 1]] = updates[key];
+
+                // Explicitly mark modified for the top-level key to ensure persistence
+                opportunity.markModified(keys[0]);
             } else {
                 opportunity[key] = updates[key];
             }
@@ -286,33 +355,14 @@ router.put('/:id', protect, async (req, res) => {
             let changes = {};
             let targetTab = null;
 
-            // 1. Requirements Update (Sales <-> Delivery)
-            const reqFields = ['requirementSummary', 'typeSpecificDetails', 'days', 'participants', 'commonDetails.trainingSupporter', 'commonDetails.courseCode', 'commonDetails.courseName'];
-            const isReqUpdated = reqFields.some(field => {
-                // Check if field exists in updates (either flat or nested in updates object)
-                return updates[field] !== undefined || (updates.typeSpecificDetails && field.startsWith('typeSpecificDetails')) || (updates.commonDetails && field.startsWith('commonDetails'));
-            });
+            // 1. Requirements Update (Sales -> Delivery)
+            if (updates.requirementSummary ||
+                updates.days ||
+                updates.participants ||
+                (updates.typeSpecificDetails && Object.keys(updates.typeSpecificDetails).length > 0)) {
 
-            // Capture changes for specific fields to show in preview
-            if (isReqUpdated) {
-                reqFields.forEach(f => {
-                    const val = updates[f] !== undefined ? updates[f] : (f.includes('.') ? updates[f.split('.')[0]]?.[f.split('.')[1]] : undefined);
-                    if (val !== undefined) changes[f] = val;
-                });
-            }
-
-            if (isReqUpdated) {
-                targetTab = 'delivery'; // Mapping Requirements to 'delivery' tab internally (UI calls it Requirements)
-                if (req.user.role === 'Delivery Team') {
-                    // Update by Delivery -> Notify Sales
-                    if (opportunity.commonDetails?.sales) {
-                        recipientId = opportunity.commonDetails.sales;
-                        notifMessage = `Requirement details has been updated by ${req.user.name} for ${opportunity.opportunityNumber}`;
-                        notifType = 'general'; // Using general or specific type
-                    }
-                } else {
-                    // Update by Sales/Admin -> Notify Delivery Team
-                    // Find all delivery team members
+                // If update is by Sales/Admin -> Notify Delivery Team
+                if (req.user.role === 'Sales Executive' || req.user.role === 'Sales Manager' || req.user.role === 'Super Admin') {
                     const deliveryUsers = await User.find({ role: 'Delivery Team' });
                     if (deliveryUsers.length > 0) {
                         const notifs = deliveryUsers.map(u => ({
@@ -323,39 +373,103 @@ router.put('/:id', protect, async (req, res) => {
                             opportunityNumber: opportunity.opportunityNumber,
                             triggeredBy: req.user._id,
                             triggeredByName: req.user.name,
-                            changes: changes,
                             targetTab: 'delivery'
                         }));
                         await Notification.insertMany(notifs);
-                        recipientId = null; // Handled bulk
                     }
                 }
             }
 
-            // 2. Expenses Update (Delivery -> Sales)
-            if (updates.expenses && req.user.role === 'Delivery Team') {
-                targetTab = 'expenses';
-                if (opportunity.commonDetails?.sales) {
-                    recipientId = opportunity.commonDetails.sales;
-                    notifMessage = `Expenses has been updated by ${req.user.name} for ${opportunity.opportunityNumber}`;
-                    notifType = 'expense_edit';
-                    changes = updates.expenses;
+            // 2. Training Details Update (Delivery -> Sales)
+            if (updates.commonDetails) {
+                // Distinguish between Financial/TOV updates (from BillingTab) and actual Training Details (from DeliveryTab)
+                const commonUpdates = updates.commonDetails;
+                // Added 'trainingDays', 'totalParticipants' to checked fields as they are relevant for Training Details but often edited with Expenses. 
+                // If BillingTab updates them, they might trigger this. 
+                // However, BillingTab updates TOV/Financials mainly.
+                // Let's stick to Core Execution details: Dates, Trainer, SME, Tech, Sector.
+                const trainingFields = ['trainingStartDate', 'trainingEndDate', 'startTime', 'endTime', 'timezone', 'mode', 'trainerName', 'trainingSector', 'technology', 'courseCode', 'courseName', 'smeId', 'selectedSME'];
+
+                const isTrainingUpdate = Object.keys(commonUpdates).some(k => {
+                    if (!trainingFields.includes(k)) return false;
+
+                    const newVal = commonUpdates[k];
+                    const oldVal = opportunity.commonDetails?.[k];
+
+                    // Skip if both are falsy (null/undefined/empty string)
+                    if (!newVal && !oldVal) return false;
+
+                    // Compare Dates
+                    if (k.includes('Date') || k.includes('Time')) {
+                        const d1 = newVal ? new Date(newVal).getTime() : 0;
+                        const d2 = oldVal ? new Date(oldVal).getTime() : 0;
+                        // Allow small difference? No, strict.
+                        return d1 !== d2;
+                    }
+
+                    // Compare primitives
+                    return String(newVal) !== String(oldVal);
+                });
+
+                const deliveryRoles = ['Delivery Team', 'Operations Lead', 'Delivery Head', 'Delivery Manager'];
+                if (isTrainingUpdate && deliveryRoles.includes(req.user.role)) {
+                    if (opportunity.createdBy) { // Notify CreatedBy (Sales Person)
+                        await Notification.create({
+                            recipientId: opportunity.createdBy,
+                            type: 'general',
+                            message: `Training details updated by ${req.user.name} for ${opportunity.opportunityNumber}`,
+                            opportunityId: opportunity._id,
+                            opportunityNumber: opportunity.opportunityNumber,
+                            triggeredBy: req.user._id,
+                            triggeredByName: req.user.name,
+                            targetTab: 'sales' // Sales user goes to Requirements tab
+                        });
+                    }
                 }
             }
 
-            // Send Single Notification if recipientId is determined
-            if (recipientId && notifMessage) {
-                await Notification.create({
-                    recipientId: recipientId,
-                    type: notifType || 'opportunity_update',
-                    message: notifMessage,
-                    opportunityId: opportunity._id,
-                    opportunityNumber: opportunity.opportunityNumber,
-                    triggeredBy: req.user._id,
-                    triggeredByName: req.user.name,
-                    changes: changes,
-                    targetTab: targetTab
+            // 3. Expenses Update (Delivery -> Sales)
+            // Handle updates from BillingTab (generic PUT)
+            const deliveryRoles = ['Delivery Team', 'Operations Lead', 'Delivery Head', 'Delivery Manager'];
+            if (updates.expenses && deliveryRoles.includes(req.user.role)) {
+                console.log('DEBUG: Expenses Update Triggered by', req.user.role);
+
+                const newExp = updates.expenses;
+                const oldExp = originalExpenses; // Use detected original state
+
+                // Check for actual changes in expenses
+                const hasExpenseChanges = Object.keys(newExp).some(k => {
+                    // Normalize comparison
+                    if (k === 'breakdown') {
+                        return JSON.stringify(newExp[k]) !== JSON.stringify(oldExp[k]);
+                    }
+
+                    const newVal = newExp[k];
+                    const oldVal = oldExp[k];
+
+                    // Treat null, undefined, empty string as equivalent "empty"
+                    if (!newVal && !oldVal) return false;
+
+                    // Numeric comparison (handle strings like "100" vs 100)
+                    if (!isNaN(parseFloat(newVal)) && !isNaN(parseFloat(oldVal))) {
+                        return parseFloat(newVal) !== parseFloat(oldVal);
+                    }
+
+                    return String(newVal) !== String(oldVal);
                 });
+
+                if (hasExpenseChanges && opportunity.createdBy) {
+                    await Notification.create({
+                        recipientId: opportunity.createdBy,
+                        type: 'expense_edit', // Matches existing type
+                        message: `Expenses updated by ${req.user.name} for ${opportunity.opportunityNumber}`,
+                        opportunityId: opportunity._id,
+                        opportunityNumber: opportunity.opportunityNumber,
+                        triggeredBy: req.user._id,
+                        triggeredByName: req.user.name,
+                        targetTab: 'billing'
+                    });
+                }
             }
 
         } catch (notifErr) {
@@ -490,29 +604,20 @@ router.put('/:id/expenses', protect, authorize('Delivery Team'), async (req, res
         await opportunity.save();
 
         // NOTIFICATION: Notify Sales Team (Creator) about breakdown update
+        // Message: "Expenses updated by (name) for (opp.id)"
         try {
-            // Check if any breakdown fields were modified
-            const breakdownFields = [
-                'trainerCost', 'vouchersCost', 'gkRoyalty', 'material', 'labs',
-                'venue', 'travel', 'accommodation', 'perDiem', 'localConveyance'
-            ];
-
-            const isBreakdownUpdated = breakdownFields.some(field => req.body[field] !== undefined);
-
-            // Notify only if breakdown updated
-            if (isBreakdownUpdated) {
-                const salesPersonId = opportunity.createdBy;
-                if (salesPersonId) {
-                    await Notification.create({
-                        recipientId: salesPersonId,
-                        type: 'expense_edit',
-                        message: `Operational expenses breakdown updated for ${opportunity.opportunityNumber} by ${req.user.name}`,
-                        opportunityId: opportunity._id,
-                        opportunityNumber: opportunity.opportunityNumber,
-                        triggeredBy: req.user._id,
-                        triggeredByName: req.user.name
-                    });
-                }
+            const salesPersonId = opportunity.createdBy;
+            if (salesPersonId) {
+                const Notification = require('../models/Notification');
+                await Notification.create({
+                    recipientId: salesPersonId,
+                    type: 'expense_edit',
+                    message: `Expenses updated by ${req.user.name} for ${opportunity.opportunityNumber}`,
+                    opportunityId: opportunity._id,
+                    opportunityNumber: opportunity.opportunityNumber,
+                    triggeredBy: req.user._id,
+                    triggeredByName: req.user.name
+                });
             }
         } catch (notifErr) {
             console.error('Notification error:', notifErr);
@@ -663,23 +768,21 @@ router.post('/:id/upload-po', protect, authorize('Sales Executive', 'Sales Manag
 
         await opportunity.save();
 
-        // NOTIFICATION: Sales -> Finance
+        // NOTIFICATION: Sales -> Delivery
         try {
-            const financeUsers = await User.find({ role: 'Finance' });
-            // Fallback to Director if no Finance user
-            const recipients = financeUsers.length > 0 ? financeUsers : await User.find({ role: 'Director' });
-
-            if (recipients.length > 0) {
+            // Notify Delivery Team
+            const deliveryTeam = await User.find({ role: 'Delivery Team' });
+            if (deliveryTeam.length > 0) {
                 const Notification = require('../models/Notification');
-                const notifs = recipients.map(u => ({
+                const notifs = deliveryTeam.map(u => ({
                     recipientId: u._id,
                     type: 'document_upload',
-                    message: `Client PO has been uploaded by ${req.user.name} for ${opportunity.opportunityNumber}`,
+                    message: `PO uploaded by ${req.user.name} for ${opportunity.opportunityNumber}`,
                     opportunityId: opportunity._id,
                     opportunityNumber: opportunity.opportunityNumber,
                     triggeredBy: req.user._id,
                     triggeredByName: req.user.name,
-                    targetTab: 'revenue' // PO tab
+                    targetTab: 'billing'
                 }));
                 await Notification.insertMany(notifs);
             }
@@ -948,6 +1051,27 @@ router.post('/:id/upload-delivery-doc', protect, authorize('Delivery Team', 'Sal
                 console.log(`Updated SME ${sme.name} contentUpload`);
             }
         }
+
+        // IMMEDIATE NOTIFICATION LOGIC (Buffer Removed)
+        try {
+            const opportunityCreator = opportunity.createdBy;
+            if (opportunityCreator) {
+                const Notification = require('../models/Notification');
+                await Notification.create({
+                    recipientId: opportunityCreator,
+                    type: 'document_upload',
+                    message: `${type} document uploaded by ${req.user.name} for ${opportunity.opportunityNumber}`,
+                    opportunityId: opportunity._id,
+                    opportunityNumber: opportunity.opportunityNumber,
+                    triggeredBy: req.user._id,
+                    triggeredByName: req.user.name,
+                    targetTab: 'delivery'
+                });
+            }
+        } catch (notifErr) {
+            console.error('Notification error:', notifErr);
+        }
+
 
         res.json({
             message: `${type} uploaded successfully`,

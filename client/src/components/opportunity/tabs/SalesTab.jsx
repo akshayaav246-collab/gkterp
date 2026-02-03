@@ -400,7 +400,7 @@ const SalesTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData, use
 
             {/* Trainer Details Section */}
             < Card >
-                <h3 className="text-lg font-bold text-primary-blue mb-4">Trainer Details</h3>
+                <h3 className="text-lg font-bold text-primary-blue mb-4">Training Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Trainer Support</label>

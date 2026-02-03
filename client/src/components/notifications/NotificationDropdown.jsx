@@ -4,6 +4,7 @@ import { Check, FileText, DollarSign, Briefcase, X, ArrowLeft, Search, Filter, B
 import notificationIcon from '../../assets/notification-icon.png';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 
 const NotificationDropdown = () => {
     const [notifications, setNotifications] = useState([]);
@@ -118,7 +119,9 @@ const NotificationDropdown = () => {
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     };
 
-    // Fetch notifications
+    const { socket } = useSocket();
+
+    // Fetch initial notifications
     const fetchNotifications = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -136,9 +139,26 @@ const NotificationDropdown = () => {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 60000);
-        return () => clearInterval(interval);
     }, []);
+
+    // Real-time listener: Listen for NEW notifications from Socket.io
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewNotification = (newNotification) => {
+            // Prepend new notification to state
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+
+            // Optional: You could play a sound here
+        };
+
+        socket.on('notification_received', handleNewNotification);
+
+        return () => {
+            socket.off('notification_received', handleNewNotification);
+        };
+    }, [socket]);
 
     // Filter notifications based on search and active filter
     useEffect(() => {
@@ -337,7 +357,7 @@ const NotificationDropdown = () => {
                                         onClick={() => handlePreviewNavigate(selectedNotification)}
                                         className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-primary-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-200 transition-all hover:scale-105 flex items-center gap-2"
                                     >
-                                        View in Respective Page
+                                        View in Page
                                         <ArrowLeft size={16} className="rotate-180" />
                                     </button>
                                 </div>

@@ -270,7 +270,7 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
 
             {/* Trainer Details */}
             <Card>
-                <h3 className="text-lg font-bold text-primary-blue mb-4">Trainer Details</h3>
+                <h3 className="text-lg font-bold text-primary-blue mb-4">Training Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Row 1: Support Type, SME */}
                     <div>
@@ -505,7 +505,7 @@ const DeliveryTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData }
             {/* 5. Delivery Documents */}
             <DeliveryDocuments
                 opportunity={opportunity}
-                canEdit={canEdit}
+                canEdit={canEdit && isEditing}
                 handleUpload={handleDeliveryDocUpload}
                 uploading={uploading}
             />

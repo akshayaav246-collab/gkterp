@@ -43,6 +43,35 @@ router.post('/', protect, authorize('Sales Executive', 'Sales Manager'), async (
     }
 });
 
+// @route   GET /api/clients/check-duplicate
+// @desc    Check if client exists by name
+// @access  Private
+router.get('/check-duplicate', protect, async (req, res) => {
+    try {
+        const { name } = req.query;
+        if (!name) {
+            return res.status(400).json({ message: 'Company name is required' });
+        }
+
+        // Escape regex special characters
+        const escapedName = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+
+        // Case insensitive search
+        const client = await Client.findOne({
+            companyName: { $regex: new RegExp(`^${escapedName}$`, 'i') }
+        });
+
+        if (client) {
+            return res.json({ exists: true, client });
+        }
+
+        res.json({ exists: false });
+    } catch (error) {
+        console.error('❌ Error checking details:', error.message);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // @route   GET /api/clients
 // @desc    Get all clients (filtered by role)
 // @access  Private
