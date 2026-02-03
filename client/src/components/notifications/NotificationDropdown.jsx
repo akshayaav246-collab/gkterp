@@ -242,7 +242,7 @@ const NotificationDropdown = () => {
                                         onClick={() => handlePreviewNavigate(selectedNotification)}
                                         className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-primary-blue hover:bg-primary-blue-dark shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
                                     >
-                                        View in Respective Page
+                                        View in Page
                                         <ArrowLeft size={16} className="rotate-180" />
                                     </button>
                                 </div>
