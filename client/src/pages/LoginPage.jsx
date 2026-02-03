@@ -43,7 +43,7 @@ const LoginPage = () => {
                     }
                 `}
             </style>
-            <div className="min-h-screen flex items-center justify-end pr-8 relative overflow-hidden" style={{ backgroundColor: '#e0e0e0' }}>
+            <div className="min-h-screen flex items-center justify-end pr-8 relative overflow-hidden" style={{ backgroundColor: '#e3e3e3' }}>
                 {/* Background Video */}
                 <video
                     autoPlay
