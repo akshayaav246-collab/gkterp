@@ -60,7 +60,7 @@ const LoginPage = () => {
                 <div className="absolute top-0 left-0 w-full h-full bg-black/20 z-10"></div>
 
                 {/* Login Card - No Background Container */}
-                <div className="p-8 w-full max-w-md relative z-20">
+                <div className="p-8 w-full max-w-sm relative z-20">
                     <div className="text-center mb-8">
                         <div className="flex flex-col items-center justify-center mb-4">
                             <img src="/login-logo.png" alt="Global Knowledge" className="h-16 w-auto object-contain mb-3" />
