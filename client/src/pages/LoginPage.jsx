@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -50,7 +51,7 @@ const LoginPage = () => {
                         <img src="/login-logo.png" alt="Global Knowledge" className="h-16 w-auto object-contain mb-3" />
                         <h2 className="text-xl font-bold text-white">Global Knowledge Technologies</h2>
                     </div>
-                
+
                 </div>
 
                 {error && (
@@ -61,16 +62,16 @@ const LoginPage = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-white mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-white mb-1">Email</label>
                         <div className="relative">
-                            <span className="absolute left-3 top-3 text-white/60">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 z-10 pointer-events-none">
                                 <Mail size={18} />
                             </span>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none transition text-white placeholder-white/50 backdrop-blur-sm"
+                                className="w-full pl-10 pr-4 py-2.5 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none transition text-white placeholder-white/50 backdrop-blur-sm relative"
                                 placeholder="name@company.com"
                                 required
                             />
@@ -80,17 +81,24 @@ const LoginPage = () => {
                     <div>
                         <label className="block text-sm font-medium text-white mb-1">Password</label>
                         <div className="relative">
-                            <span className="absolute left-3 top-3 text-white/60">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 z-10 pointer-events-none">
                                 <Lock size={18} />
                             </span>
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none transition text-white placeholder-white/50 backdrop-blur-sm"
+                                className="w-full pl-10 pr-12 py-2.5 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none transition text-white placeholder-white/50 backdrop-blur-sm relative"
                                 placeholder="••••••••"
                                 required
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 transition z-10 focus:outline-none"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
                         </div>
                     </div>
 
