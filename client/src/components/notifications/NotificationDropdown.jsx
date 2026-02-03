@@ -1,16 +1,63 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Check, FileText, DollarSign, Briefcase, X, ArrowLeft } from 'lucide-react';
+import { Check, FileText, DollarSign, Briefcase, X, ArrowLeft, Search, Filter, Bell as BellIcon, CheckCheck } from 'lucide-react';
 import notificationIcon from '../../assets/notification-icon.png';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const NotificationDropdown = () => {
     const [notifications, setNotifications] = useState([]);
+    const [filteredNotifications, setFilteredNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
-    // Removed dropdownRef as we use backdrop click for closing
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState('all');
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    // Role-based filter options
+    const getFilterOptions = () => {
+        const baseFilters = [
+            { id: 'all', label: 'All', icon: BellIcon },
+            { id: 'unread', label: 'Unread', icon: BellIcon },
+        ];
+
+        const roleSpecificFilters = {
+            'Sales Executive': [
+                { id: 'opportunity_created', label: 'Opportunities', icon: Briefcase },
+                { id: 'approval_status_change', label: 'Approvals', icon: CheckCheck },
+                { id: 'document_upload', label: 'Documents', icon: FileText },
+            ],
+            'Sales Manager': [
+                { id: 'gp_approval_request', label: 'GP Approvals', icon: DollarSign },
+                { id: 'opportunity_created', label: 'Opportunities', icon: Briefcase },
+                { id: 'approval_granted', label: 'Approved', icon: Check },
+            ],
+            'Operations Manager': [
+                { id: 'document_upload', label: 'Documents', icon: FileText },
+                { id: 'expense_edit', label: 'Expenses', icon: DollarSign },
+            ],
+            'Business Head': [
+                { id: 'gp_approval_request', label: 'GP Approvals', icon: DollarSign },
+                { id: 'approval_status_change', label: 'Status Changes', icon: CheckCheck },
+            ],
+            'Finance Manager': [
+                { id: 'expense_edit', label: 'Expenses', icon: DollarSign },
+                { id: 'gp_approval_request', label: 'GP Approvals', icon: DollarSign },
+            ],
+            'Director': [
+                { id: 'gp_approval_request', label: 'GP Approvals', icon: DollarSign },
+                { id: 'approval_status_change', label: 'Approvals', icon: CheckCheck },
+                { id: 'opportunity_created', label: 'Opportunities', icon: Briefcase },
+            ],
+        };
+
+        const userRole = user?.role || 'Sales Executive';
+        const specificFilters = roleSpecificFilters[userRole] || roleSpecificFilters['Sales Executive'];
+
+        return [...baseFilters, ...specificFilters];
+    };
 
     // --- Helpers ---
     const formatFieldName = (field) => {
@@ -25,15 +72,39 @@ const NotificationDropdown = () => {
         switch (type) {
             case 'approval_granted':
             case 'document_upload':
-                return { bg: 'bg-emerald-50/50', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-700', icon: Check };
+                return {
+                    bg: 'bg-gradient-to-br from-emerald-50 to-green-50',
+                    iconBg: 'bg-gradient-to-br from-emerald-400 to-green-500',
+                    iconColor: 'text-white',
+                    icon: Check,
+                    borderColor: 'border-l-emerald-400'
+                };
             case 'expense_edit':
             case 'gp_approval_request':
-                return { bg: 'bg-amber-50/50', iconBg: 'bg-amber-100', iconColor: 'text-amber-700', icon: DollarSign };
+                return {
+                    bg: 'bg-gradient-to-br from-amber-50 to-orange-50',
+                    iconBg: 'bg-gradient-to-br from-amber-400 to-orange-500',
+                    iconColor: 'text-white',
+                    icon: DollarSign,
+                    borderColor: 'border-l-amber-400'
+                };
             case 'opportunity_created':
             case 'approval_status_change':
-                return { bg: 'bg-blue-50/50', iconBg: 'bg-blue-100', iconColor: 'text-blue-700', icon: Briefcase };
+                return {
+                    bg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+                    iconBg: 'bg-gradient-to-br from-blue-400 to-indigo-500',
+                    iconColor: 'text-white',
+                    icon: Briefcase,
+                    borderColor: 'border-l-blue-400'
+                };
             default:
-                return { bg: 'bg-gray-50/50', iconBg: 'bg-gray-100', iconColor: 'text-gray-600', icon: 'notification' };
+                return {
+                    bg: 'bg-gradient-to-br from-gray-50 to-slate-50',
+                    iconBg: 'bg-gradient-to-br from-gray-400 to-slate-500',
+                    iconColor: 'text-white',
+                    icon: 'notification',
+                    borderColor: 'border-l-gray-400'
+                };
         }
     };
 
@@ -68,6 +139,27 @@ const NotificationDropdown = () => {
         const interval = setInterval(fetchNotifications, 60000);
         return () => clearInterval(interval);
     }, []);
+
+    // Filter notifications based on search and active filter
+    useEffect(() => {
+        let filtered = notifications;
+
+        // Apply type filter
+        if (activeFilter === 'unread') {
+            filtered = filtered.filter(n => !n.isRead);
+        } else if (activeFilter !== 'all') {
+            filtered = filtered.filter(n => n.type === activeFilter);
+        }
+
+        // Apply search filter
+        if (searchQuery.trim()) {
+            filtered = filtered.filter(n =>
+                n.message.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        setFilteredNotifications(filtered);
+    }, [notifications, activeFilter, searchQuery]);
 
     const handleMarkAsRead = async (id, e) => {
         if (e) e.stopPropagation();
@@ -127,17 +219,19 @@ const NotificationDropdown = () => {
         }
     };
 
+    const filterOptions = getFilterOptions();
+
     return (
         <>
             {/* Notification Icon Trigger */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="relative p-2 text-gray-500 hover:text-primary-blue hover:bg-gray-100 rounded-full transition-colors"
+                className="relative p-2 text-gray-500 hover:text-primary-blue hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
                 aria-label="Notifications"
             >
                 <img src={notificationIcon} alt="Notifications" className="w-7 h-7" />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-xs flex items-center justify-center rounded-full animate-pulse">
+                    <span className="absolute top-0 right-0 h-5 w-5 bg-gradient-to-br from-red-500 to-pink-600 text-white text-xs flex items-center justify-center rounded-full animate-pulse shadow-lg">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -146,64 +240,65 @@ const NotificationDropdown = () => {
             {/* Modal Overlay */}
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Backdrop with Glassmorphism Blur */}
+                    {/* Backdrop with Enhanced Glassmorphism Blur */}
                     <div
-                        className="absolute inset-0 bg-black/30 backdrop-blur-md transition-opacity duration-300"
+                        className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40 backdrop-blur-xl transition-all duration-300"
                         onClick={() => setIsOpen(false)}
                     />
 
-                    {/* Modal Content - Enterprise Grade with Preview Support */}
-                    <div className="relative bg-[#f8f9fc] backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-white/50 transform transition-all scale-100 animate-in fade-in zoom-in duration-200 font-sans">
+                    {/* Modal Content - Professional Design with Fixed Height */}
+                    <div className="relative bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl w-full max-w-2xl h-[80vh] overflow-hidden border border-white/50 transform transition-all scale-100 animate-in fade-in zoom-in duration-300 flex flex-col">
 
                         {selectedNotification ? (
                             // PREVIEW MODE
-                            <div className="flex flex-col h-[65vh]">
+                            <div className="flex flex-col h-full">
                                 {/* Preview Header */}
-                                <div className="flex items-center gap-3 px-6 py-4 bg-white border-b border-gray-100 shadow-sm relative z-10">
+                                <div className="flex items-center gap-3 px-6 py-5 bg-gradient-to-r from-primary-blue to-blue-600 text-white shadow-lg relative z-10">
                                     <button
                                         onClick={() => setSelectedNotification(null)}
-                                        className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-all group"
+                                        className="p-2 -ml-2 rounded-full hover:bg-white/20 transition-all group"
                                     >
-                                        <ArrowLeft size={20} strokeWidth={2} className="group-hover:-translate-x-0.5 transition-transform" />
+                                        <ArrowLeft size={20} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
                                     </button>
-                                    <h3 className="text-lg font-bold text-slate-800">Notification Details</h3>
+                                    <h3 className="text-lg font-bold">Notification Details</h3>
                                     <div className="ml-auto">
                                         <button
                                             onClick={() => setIsOpen(false)}
-                                            className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
+                                            className="p-2 rounded-full hover:bg-white/20 transition-all"
                                         >
-                                            <X size={20} strokeWidth={2} />
+                                            <X size={20} strokeWidth={2.5} />
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Preview Content */}
-                                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#f8f9fc]">
-                                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6">
+                                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gradient-to-br from-gray-50 to-blue-50/30">
+                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-6 mb-6 hover:shadow-xl transition-shadow">
                                         <div className="flex items-start gap-4 mb-4">
-                                            <div className={`p-3 rounded-full flex-shrink-0 ${getStyleConfig(selectedNotification.type).iconBg}`}>
+                                            <div className={`p-4 rounded-2xl flex-shrink-0 shadow-lg ${getStyleConfig(selectedNotification.type).iconBg}`}>
                                                 {getStyleConfig(selectedNotification.type).icon === 'notification' ? (
-                                                    <img src={notificationIcon} alt="Notification" className="w-7 h-7" />
+                                                    <img src={notificationIcon} alt="Notification" className="w-7 h-7 brightness-0 invert" />
                                                 ) : (
                                                     React.createElement(getStyleConfig(selectedNotification.type).icon, {
-                                                        size: 24,
+                                                        size: 28,
                                                         className: getStyleConfig(selectedNotification.type).iconColor,
-                                                        strokeWidth: 2
+                                                        strokeWidth: 2.5
                                                     })
                                                 )}
                                             </div>
                                             <div>
-                                                <p className="text-base font-semibold text-slate-900 leading-snug mb-1">
+                                                <p className="text-base font-bold text-slate-900 leading-snug mb-2">
                                                     {selectedNotification.message}
                                                 </p>
-                                                <p className="text-sm text-slate-500 font-medium">
+                                                <p className="text-sm text-slate-500 font-medium flex items-center gap-2">
+                                                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                                                     {formatTime(selectedNotification.createdAt)}
                                                 </p>
                                             </div>
                                         </div>
 
                                         {/* Divider */}
-                                        <div className="h-px bg-gray-100 my-4"></div>
+                                        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
 
                                         {/* Change Log Details */}
                                         {selectedNotification.changes && Object.keys(selectedNotification.changes).length > 0 ? (
@@ -211,11 +306,11 @@ const NotificationDropdown = () => {
                                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                                     <FileText size={14} /> Full Change Log
                                                 </h4>
-                                                <div className="bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+                                                <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl border border-slate-200 overflow-hidden shadow-inner">
                                                     {Object.entries(selectedNotification.changes).map(([key, value], index) => (
-                                                        <div key={key} className={`p-4 grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-2 ${index !== 0 ? 'border-t border-slate-100' : ''}`}>
-                                                            <span className="text-sm font-semibold text-slate-600">{formatFieldName(key)}</span>
-                                                            <span className="text-sm text-slate-800 font-medium break-words bg-white px-2 py-1 rounded border border-slate-200 inline-block shadow-sm">
+                                                        <div key={key} className={`p-4 grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-3 ${index !== 0 ? 'border-t border-slate-200' : ''} hover:bg-white/50 transition-colors`}>
+                                                            <span className="text-sm font-bold text-slate-700">{formatFieldName(key)}</span>
+                                                            <span className="text-sm text-slate-900 font-medium break-words bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm">
                                                                 {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                                                             </span>
                                                         </div>
@@ -223,7 +318,7 @@ const NotificationDropdown = () => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="text-sm text-slate-500 italic text-center py-4 bg-slate-50 rounded-lg">
+                                            <div className="text-sm text-slate-500 italic text-center py-6 bg-slate-50 rounded-xl border border-slate-100">
                                                 No specific field changes recorded.
                                             </div>
                                         )}
@@ -231,18 +326,18 @@ const NotificationDropdown = () => {
                                 </div>
 
                                 {/* Preview Footer Actions */}
-                                <div className="p-4 bg-white border-t border-gray-200 flex justify-end gap-3 z-10">
+                                <div className="flex-shrink-0 p-5 bg-white border-t border-gray-200 flex justify-end gap-3 z-10 shadow-lg">
                                     <button
                                         onClick={() => setSelectedNotification(null)}
-                                        className="px-5 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                                        className="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all hover:scale-105"
                                     >
                                         Back
                                     </button>
                                     <button
                                         onClick={() => handlePreviewNavigate(selectedNotification)}
-                                        className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-primary-blue hover:bg-primary-blue-dark shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
+                                        className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-primary-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-200 transition-all hover:scale-105 flex items-center gap-2"
                                     >
-                                        View in Page
+                                        View in Respective Page
                                         <ArrowLeft size={16} className="rotate-180" />
                                     </button>
                                 </div>
@@ -250,50 +345,89 @@ const NotificationDropdown = () => {
                         ) : (
                             // LIST MODE
                             <>
-                                {/* Header - 24px Padding Rhythm */}
-                                <div className="flex justify-between items-start px-8 py-6 bg-white border-b border-gray-100 shadow-sm z-20 relative">
-                                    <div>
-                                        <div className="flex items-center gap-3">
-                                            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Notifications</h3>
-                                            {unreadCount > 0 && (
-                                                <span className="bg-blue-100 text-blue-700 text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                                    {unreadCount} Unread
-                                                </span>
-                                            )}
+                                {/* Header with Gradient - Fixed Height */}
+                                <div className="flex-shrink-0 px-8 py-6 bg-gradient-to-r from-primary-blue to-blue-600 text-white shadow-lg z-20 relative">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-2xl font-bold tracking-tight">Notifications</h3>
+                                                {unreadCount > 0 && (
+                                                    <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                                                        {unreadCount} New
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-
-                                    </div>
-                                    <div className="flex items-center gap-3 mt-1">
-                                        {unreadCount > 0 && (
+                                        <div className="flex items-center gap-3">
+                                            {unreadCount > 0 && (
+                                                <button
+                                                    onClick={handleMarkAllRead}
+                                                    className="text-sm font-medium text-white/90 hover:text-white transition-colors flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm"
+                                                >
+                                                    <CheckCheck size={16} />
+                                                    Mark all read
+                                                </button>
+                                            )}
                                             <button
-                                                onClick={handleMarkAllRead}
-                                                className="text-sm font-medium text-slate-500 hover:text-primary-blue transition-colors mr-2"
+                                                onClick={() => setIsOpen(false)}
+                                                className="p-2 rounded-full hover:bg-white/20 transition-all"
                                             >
-                                                Mark all read
+                                                <X size={22} strokeWidth={2.5} />
                                             </button>
-                                        )}
-                                        <button
-                                            onClick={() => setIsOpen(false)}
-                                            className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
-                                        >
-                                            <X size={20} strokeWidth={2} />
-                                        </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Search Bar */}
+                                    <div className="relative mb-4">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search notifications..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                                        />
+                                    </div>
+
+                                    {/* Filter Buttons */}
+                                    <div className="flex flex-wrap gap-2">
+                                        {filterOptions.map((filter) => {
+                                            const Icon = filter.icon;
+                                            const isActive = activeFilter === filter.id;
+                                            return (
+                                                <button
+                                                    key={filter.id}
+                                                    onClick={() => setActiveFilter(filter.id)}
+                                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${isActive
+                                                        ? 'bg-white text-primary-blue shadow-lg scale-105'
+                                                        : 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm'
+                                                        }`}
+                                                >
+                                                    <Icon size={16} />
+                                                    {filter.label}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
-                                {/* Notification List - 16px Row Spacing, 24px Padding */}
-                                <div className="max-h-[65vh] overflow-y-auto custom-scrollbar px-6 py-6 scroll-smooth">
-                                    {notifications.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-20 text-center">
-                                            <div className="bg-white p-6 rounded-full shadow-sm mb-4 ring-1 ring-gray-100">
-                                                <img src={notificationIcon} alt="No notifications" className="w-12 h-12 opacity-30" />
+                                {/* Notification List - Scrollable Area */}
+                                <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-6 bg-gradient-to-br from-gray-50 to-blue-50/30">
+                                    {filteredNotifications.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full text-center">
+                                            <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-8 rounded-full shadow-lg mb-6 ring-4 ring-blue-50 animate-pulse">
+                                                <img src={notificationIcon} alt="No notifications" className="w-16 h-16 opacity-40" />
                                             </div>
-                                            <h4 className="text-slate-700 font-semibold text-lg">All caught up!</h4>
-                                            <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">You have no new notifications.</p>
+                                            <h4 className="text-slate-800 font-bold text-xl mb-2">All caught up!</h4>
+                                            <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                                                {searchQuery || activeFilter !== 'all'
+                                                    ? 'No notifications match your filters.'
+                                                    : 'You have no new notifications.'}
+                                            </p>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col gap-4">
-                                            {notifications.map((notification) => (
+                                        <div className="flex flex-col gap-3">
+                                            {filteredNotifications.map((notification) => (
                                                 <NotificationItem
                                                     key={notification._id}
                                                     notification={notification}
@@ -305,9 +439,9 @@ const NotificationDropdown = () => {
                                     )}
                                 </div>
 
-                                {/* Footer (Optional, mostly for aesthetic spacer) */}
-                                <div className="bg-gray-50/80 p-3 text-center border-t border-gray-200/50">
-                                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                                {/* Footer - Fixed Height */}
+                                <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-blue-50/50 p-4 text-center border-t border-gray-200/50 shadow-inner">
+                                    <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
                                         Global Knowledge Technologies
                                     </span>
                                 </div>
@@ -325,8 +459,8 @@ const NotificationItem = ({ notification, onRead, onNavigate }) => {
     // Helper function for field naming
     const formatFieldName = (field) => {
         return field
-            .replace(/([A-Z])/g, ' $1') // Space before capital letters
-            .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
             .replace('Common Details.', '')
             .replace('Type Specific Details.', '');
     };
@@ -337,37 +471,41 @@ const NotificationItem = ({ notification, onRead, onNavigate }) => {
             case 'approval_granted':
             case 'document_upload':
                 return {
-                    bg: 'bg-emerald-50/50',
-                    iconBg: 'bg-emerald-100',
-                    iconColor: 'text-emerald-700',
+                    bg: 'bg-gradient-to-br from-emerald-50 to-green-50',
+                    iconBg: 'bg-gradient-to-br from-emerald-400 to-green-500',
+                    iconColor: 'text-white',
                     icon: Check,
-                    hoverBorder: 'border-emerald-200'
+                    hoverBorder: 'border-emerald-300',
+                    borderColor: 'border-l-emerald-400'
                 };
             case 'expense_edit':
             case 'gp_approval_request':
                 return {
-                    bg: 'bg-amber-50/50',
-                    iconBg: 'bg-amber-100',
-                    iconColor: 'text-amber-700',
+                    bg: 'bg-gradient-to-br from-amber-50 to-orange-50',
+                    iconBg: 'bg-gradient-to-br from-amber-400 to-orange-500',
+                    iconColor: 'text-white',
                     icon: DollarSign,
-                    hoverBorder: 'border-amber-200'
+                    hoverBorder: 'border-amber-300',
+                    borderColor: 'border-l-amber-400'
                 };
             case 'opportunity_created':
             case 'approval_status_change':
                 return {
-                    bg: 'bg-blue-50/50',
-                    iconBg: 'bg-blue-100',
-                    iconColor: 'text-blue-700',
+                    bg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+                    iconBg: 'bg-gradient-to-br from-blue-400 to-indigo-500',
+                    iconColor: 'text-white',
                     icon: Briefcase,
-                    hoverBorder: 'border-blue-200'
+                    hoverBorder: 'border-blue-300',
+                    borderColor: 'border-l-blue-400'
                 };
             default:
                 return {
-                    bg: 'bg-gray-50/50',
-                    iconBg: 'bg-gray-100',
-                    iconColor: 'text-gray-600',
+                    bg: 'bg-gradient-to-br from-gray-50 to-slate-50',
+                    iconBg: 'bg-gradient-to-br from-gray-400 to-slate-500',
+                    iconColor: 'text-white',
                     icon: 'notification',
-                    hoverBorder: 'border-gray-200'
+                    hoverBorder: 'border-gray-300',
+                    borderColor: 'border-l-gray-400'
                 };
         }
     };
@@ -390,49 +528,51 @@ const NotificationItem = ({ notification, onRead, onNavigate }) => {
         <div
             onClick={() => onNavigate(notification)}
             className={`
-                group relative mx-0 p-4 rounded-xl cursor-pointer transition-all duration-200 ease-in-out
-                bg-white border border-transparent hover:border-gray-200 hover:shadow-md hover:z-10
-                flex items-center gap-4 mb-3 last:mb-0
+                group relative p-4 rounded-2xl cursor-pointer transition-all duration-300 ease-out
+                bg-white border-l-4 ${style.borderColor} border border-gray-100
+                hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 hover:border-${style.hoverBorder}
+                flex items-center gap-4
             `}
-            style={{ borderRadius: '12px' }}
         >
-            {/* Unread Indicator Dot - Perfectly Centered Vertically relative to Icon */}
+            {/* Unread Indicator Dot */}
             {!notification.isRead && (
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 shadow-sm shadow-blue-200"></div>
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-blue-500 shadow-lg shadow-blue-200 animate-pulse"></div>
             )}
 
-            {/* Icon Container - Fixed 40px Circle, Perfectly Centered */}
+            {/* Icon Container with Gradient */}
             <div className={`
-                flex-shrink-0 w-10 h-10 rounded-full ${style.iconBg} 
-                flex items-center justify-center shadow-sm relative z-10
+                flex-shrink-0 w-12 h-12 rounded-xl ${style.iconBg} 
+                flex items-center justify-center shadow-lg relative z-10
+                group-hover:scale-110 transition-transform duration-300
             `}>
                 {Icon === 'notification' ? (
-                    <img src={notificationIcon} alt="Notification" className="w-[20px] h-[20px]" />
+                    <img src={notificationIcon} alt="Notification" className="w-[22px] h-[22px] brightness-0 invert" />
                 ) : (
-                    <Icon size={18} className={style.iconColor} strokeWidth={2.5} />
+                    <Icon size={20} className={style.iconColor} strokeWidth={2.5} />
                 )}
             </div>
 
-            {/* Main Content Grid - Vertical Center Fix */}
-            <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
-                {/* Header Row: Title & Time - Forced Vertical Center */}
-                <div className="flex justify-between items-center gap-4">
-                    <p className={`text-sm leading-[1.35] m-0 p-0 ${!notification.isRead ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
+            {/* Main Content */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex justify-between items-start gap-4">
+                    <p className={`text-sm leading-snug ${!notification.isRead ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
                         {notification.message}
                     </p>
-                    <span className="text-xs font-medium text-slate-400 whitespace-nowrap self-center">
+                    <span className="text-xs font-semibold text-slate-400 whitespace-nowrap flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
                         {formatTime(notification.createdAt)}
                     </span>
                 </div>
 
                 {/* Read Action (Hover) */}
                 {!notification.isRead && (
-                    <div className="h-0 group-hover:h-auto overflow-hidden transition-all">
+                    <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-200">
                         <button
                             onClick={(e) => onRead(notification._id, e)}
-                            className="opacity-0 group-hover:opacity-100 text-[10px] font-medium text-slate-400 hover:text-primary-blue transition-all mt-1"
+                            className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-blue-500 hover:text-blue-700 transition-all mt-2 flex items-center gap-1"
                         >
-                            Mark Read
+                            <Check size={12} />
+                            Mark as Read
                         </button>
                     </div>
                 )}
