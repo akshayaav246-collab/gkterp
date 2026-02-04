@@ -149,12 +149,13 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
         }
     };
 
-    const confirmAction = (title, message, onConfirm, type = 'info') => {
+    const confirmAction = (title, message, onConfirm, onCancel, type = 'info') => {
         setAlertConfig({
             isOpen: true,
             title,
             message,
             onConfirm,
+            onCancel, // Store the cancel handler
             type
         });
     };
@@ -172,6 +173,8 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                 "GP Margin is between 10-15%. This requires Manager approval. Do you want to proceed?",
                 // On Confirm: Escalate
                 () => handleEscalate('gp', { targetGpPercent: value }),
+                // On Cancel: Revert to default (30%)
+                () => handleChange('expenses', 'targetGpPercent', 30),
                 'info'
             );
         } else if (value < 10) {
@@ -180,6 +183,8 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                 "GP Margin is below 10%. This requires Director approval. Do you want to proceed?",
                 // On Confirm: Escalate
                 () => handleEscalate('gp', { targetGpPercent: value }),
+                // On Cancel: Revert to default (30%)
+                () => handleChange('expenses', 'targetGpPercent', 30),
                 'warning'
             );
         }
@@ -197,6 +202,8 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                 "Contingency is below 10%. This requires Manager approval. Do you want to proceed?",
                 // On Confirm: Escalate
                 () => handleEscalate('contingency', { contingencyPercent: value }),
+                // On Cancel: Revert to default (15%)
+                () => handleChange('expenses', 'contingencyPercent', 15),
                 'warning'
             );
         }
@@ -692,7 +699,10 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
 
             <AlertModal
                 isOpen={alertConfig.isOpen}
-                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                onClose={() => {
+                    if (alertConfig.onCancel) alertConfig.onCancel();
+                    setAlertConfig(prev => ({ ...prev, isOpen: false }));
+                }}
                 title={alertConfig.title}
                 message={alertConfig.message}
                 onConfirm={alertConfig.onConfirm}
