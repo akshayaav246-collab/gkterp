@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CheckCircle, Circle, Clock, AlertCircle } from 'lucide-react';
 
-const StatusBar = ({ opportunityId }) => {
+const ProgressBar = ({ opportunityId }) => {
     const [progressData, setProgressData] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -37,10 +37,10 @@ const StatusBar = ({ opportunityId }) => {
     const { progressPercentage, statusStage, statusLabel, requiredFieldsForNextStage } = progressData;
 
     const stages = [
-        { name: 'Creation', label: 'Opportunity Created', range: [0, 30], icon: Circle },
-        { name: 'Costing', label: 'Costing & Expenses Added', range: [30, 50], icon: Circle },
-        { name: 'Proposal', label: 'Proposal Submitted', range: [50, 80], icon: Circle },
-        { name: 'PO Confirmed', label: 'PO Received', range: [80, 100], icon: CheckCircle }
+        { name: 'Created', label: 'Created', range: [0, 30], icon: Circle },
+        { name: 'In Progress', label: 'In Progress', range: [30, 50], icon: Circle },
+        { name: 'Scheduled', label: 'Scheduled', range: [50, 80], icon: Circle },
+        { name: 'Completed', label: 'Completed', range: [80, 100], icon: CheckCircle }
     ];
 
     const getStageStatus = (stage) => {
@@ -150,4 +150,4 @@ const StatusBar = ({ opportunityId }) => {
     );
 };
 
-export default StatusBar;
+export default ProgressBar;

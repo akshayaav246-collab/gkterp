@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, FileText, Truck, DollarSign, FolderOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import StatusBar from '../components/opportunity/StatusBar';
+import ProgressBar from '../components/opportunity/ProgressBar';
 import Tabs from '../components/ui/Tabs';
 import Button from '../components/ui/Button';
 import OverviewTab from '../components/opportunity/tabs/OverviewTab';

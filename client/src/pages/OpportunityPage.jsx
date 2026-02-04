@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import GPReportSection from '../components/reports/GPReportSection';
 import CreateOpportunityModal from '../components/opportunity/CreateOpportunityModal';
+import AlertModal from '../components/ui/AlertModal';
 
 const OpportunityPage = () => {
     const navigate = useNavigate();
@@ -23,6 +24,9 @@ const OpportunityPage = () => {
     const [filterType, setFilterType] = useState('');
     const [filterMonth, setFilterMonth] = useState('');
     const [filterYear, setFilterYear] = useState('');
+
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState({ isOpen: false, oppId: null, newStatus: '' });
 
     useEffect(() => {
         fetchOpportunities();
@@ -52,8 +56,8 @@ const OpportunityPage = () => {
     const handleStatusChange = async (oppId, newStatus) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:5000/api/opportunities/${oppId}`,
-                { 'commonDetails.status': newStatus },
+            await axios.put(`http://localhost:5000/api/opportunities/${oppId}/status`,
+                { status: newStatus },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             addToast('Status updated successfully', 'success');
@@ -231,7 +235,7 @@ const OpportunityPage = () => {
                                 )}
                                 <th className="px-6 py-3 font-semibold text-gray-900 text-center">Type</th>
                                 <th className="px-6 py-3 font-semibold text-gray-900 text-center">Progress</th>
-                                <th className="px-6 py-3 font-semibold text-gray-900 text-center">Status</th>
+                                <th className="px-6 py-3 font-semibold text-gray-900 text-center">Approval Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -323,7 +327,7 @@ const OpportunityPage = () => {
 
                                             {/* Progress Column */}
                                             <td className="px-6 py-4 text-center">
-                                                <div className="flex flex-col items-center space-y-1">
+                                                <div className="flex flex-col items-center space-y-2">
                                                     <div className="flex items-center space-x-2">
                                                         <div className="w-16 bg-gray-200 rounded-full h-1.5">
                                                             <div
@@ -332,6 +336,27 @@ const OpportunityPage = () => {
                                                             ></div>
                                                         </div>
                                                         <span className="text-xs font-semibold text-gray-600">{opp.progressPercentage || 0}%</span>
+                                                    </div>
+
+                                                    {/* Manual Status Override */}
+                                                    <div onClick={(e) => e.stopPropagation()}>
+                                                        <select
+                                                            className="text-xs border border-gray-200 rounded p-1 bg-gray-50 hover:bg-white focus:ring-1 focus:ring-brand-blue"
+                                                            value={opp.commonDetails?.status || 'Active'}
+                                                            onChange={(e) => {
+                                                                setStatusModal({
+                                                                    isOpen: true,
+                                                                    oppId: opp._id,
+                                                                    newStatus: e.target.value
+                                                                });
+                                                            }}
+                                                            disabled={!isSalesRole && !isDeliveryRole}
+                                                        >
+                                                            <option value="Active">Active</option>
+                                                            <option value="Cancelled">Cancelled</option>
+                                                            <option value="Discontinued">Discontinued</option>
+                                                            <option value="Completed">Completed</option>
+                                                        </select>
                                                     </div>
                                                 </div>
                                             </td>
@@ -354,6 +379,21 @@ const OpportunityPage = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Status Confirmation Modal */}
+            <AlertModal
+                isOpen={statusModal.isOpen}
+                onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+                title="Confirm Status Change"
+                message={`Are you sure you want to change the status to "${statusModal.newStatus}"?`}
+                confirmText="Yes, Change Status"
+                cancelText="No, Keep It"
+                type="warning"
+                onConfirm={() => {
+                    handleStatusChange(statusModal.oppId, statusModal.newStatus);
+                    setStatusModal({ ...statusModal, isOpen: false });
+                }}
+            />
         </div>
     );
 };

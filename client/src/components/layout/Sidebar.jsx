@@ -119,13 +119,13 @@ const Sidebar = () => {
             <div
                 className={`
           fixed top-0 left-0 h-screen bg-gradient-to-b from-primary-blue-dark to-primary-blue
-          transition-all duration-300 z-40 flex flex-col shadow-2xl
+          transition-all duration-300 z-40 flex flex-col shadow-2xl overflow-hidden
           ${isCollapsed ? 'w-20' : 'w-72'}
         `}
             >
                 {/* User Profile Section */}
                 {!isCollapsed && (
-                    <div className="p-6 text-center border-b border-white/10">
+                    <div className="p-6 text-center border-b border-white/10 whitespace-nowrap">
                         {/* Avatar */}
                         <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-accent-yellow flex items-center justify-center text-primary-blue-dark font-bold text-2xl shadow-lg">
                             {getUserInitials()}
@@ -151,7 +151,7 @@ const Sidebar = () => {
                 )}
 
                 {/* Navigation Menu */}
-                <nav className="flex-1 overflow-y-auto py-6 px-4">
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-4">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.path);
@@ -162,7 +162,7 @@ const Sidebar = () => {
                                 to={item.path}
                                 className={`
                   flex items-center space-x-3 px-4 py-3 mb-2 rounded-lg
-                  transition-all duration-200 group
+                  transition-all duration-200 group whitespace-nowrap
                   ${active
                                         ? 'bg-white/20 text-white shadow-md'
                                         : 'text-white/70 hover:bg-white/10 hover:text-white'

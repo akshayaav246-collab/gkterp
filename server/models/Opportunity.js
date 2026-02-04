@@ -39,8 +39,8 @@ const OpportunitySchema = new mongoose.Schema({
 
     statusStage: {
         type: String,
-        enum: ['Creation', 'Costing', 'Proposal', 'PO Received', 'PO Confirmed', 'Invoiced', 'Scheduled', 'In Progress', 'Completed', 'Cancelled', 'Discontinued'],
-        default: 'Creation'
+        enum: ['Creation', 'Created', 'Costing', 'Proposal', 'PO Received', 'PO Confirmed', 'Invoiced', 'Scheduled', 'In Progress', 'Completed', 'Cancelled', 'Discontinued'],
+        default: 'Created' // Updated default to match new logic
     },
 
     statusLabel: {

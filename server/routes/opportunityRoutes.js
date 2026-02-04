@@ -242,6 +242,124 @@ router.get('/:id', protect, async (req, res) => {
     }
 });
 
+// @route   PUT /api/opportunities/:id/status
+// @desc    Update opportunity status directly (e.g. Cancelled/Discontinued)
+// @access  Private
+router.put('/:id/status', protect, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const opportunity = await Opportunity.findById(req.params.id);
+
+        if (!opportunity) {
+            return res.status(404).json({ message: 'Opportunity not found' });
+        }
+
+        // Validate Status
+        const validStatuses = ['Active', 'Pending', 'In Progress', 'Completed', 'Closed', 'Lost', 'Scheduled', 'Cancelled', 'Discontinued'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
+        }
+
+        // Strict Validation for Completed Status
+        if (status === 'Completed') {
+            const missingFields = [];
+
+            // 1. Requirement Summary
+            if (!opportunity.requirementSummary || opportunity.requirementSummary.trim().length === 0) {
+                missingFields.push('Requirement Summary');
+            }
+
+            // 2. Type-Specific Scope & Sizing
+            const typeDetails = opportunity.typeSpecificDetails || {};
+            const type = opportunity.type || 'Training';
+
+            switch (type) {
+                case 'Training':
+                    if (!typeDetails.technology) missingFields.push('Technology');
+                    if (!typeDetails.modeOfTraining) missingFields.push('Mode of Training');
+                    if (!typeDetails.trainingName && !opportunity.commonDetails?.courseName) missingFields.push('Training Name');
+                    if (!opportunity.participants || opportunity.participants <= 0) missingFields.push('Participants');
+                    break;
+
+                case 'Product Support':
+                    if (!typeDetails.projectScope) missingFields.push('Project Scope');
+                    if (!typeDetails.teamSize || typeDetails.teamSize <= 0) missingFields.push('Team Size');
+                    break;
+
+                case 'Resource Support':
+                    if (!typeDetails.resourceType) missingFields.push('Resource Type');
+                    if (!typeDetails.resourceCount || typeDetails.resourceCount <= 0) missingFields.push('Resource Count');
+                    break;
+
+                case 'Vouchers':
+                    if (!typeDetails.technology) missingFields.push('Technology');
+                    if (!typeDetails.examDetails) missingFields.push('Exam Details');
+                    if (!typeDetails.examLocation) missingFields.push('Exam Location');
+                    if (!typeDetails.noOfVouchers || typeDetails.noOfVouchers <= 0) missingFields.push('Number of Vouchers');
+                    break;
+
+                case 'Content Support':
+                    if (!typeDetails.contentType) missingFields.push('Content Type');
+                    if (!typeDetails.deliveryFormat) missingFields.push('Delivery Format');
+                    break;
+
+                case 'Lab Support':
+                    if (!typeDetails.technology) missingFields.push('Technology');
+                    if (!typeDetails.requirement) missingFields.push('Requirement');
+                    if (!typeDetails.region) missingFields.push('Region');
+                    if (!typeDetails.noOfIds || typeDetails.noOfIds <= 0) missingFields.push('Number of IDs');
+                    if (!typeDetails.duration || typeDetails.duration <= 0) missingFields.push('Duration');
+                    break;
+
+                default:
+                    if (!typeDetails.technology) missingFields.push('Technology');
+            }
+
+            // 3. Costing (Check if at least one cost is entered)
+            const exp = opportunity.expenses || {};
+            const hasExpenses = (exp.trainerCost > 0 || exp.travel > 0 || exp.material > 0 || exp.labs > 0 || exp.venue > 0);
+            if (!hasExpenses) missingFields.push('Costing/Expenses');
+
+            // 5. SME/Trainer
+            const hasSME = opportunity.selectedSME || opportunity.commonDetails?.trainerDetails?.name;
+            if (!hasSME) missingFields.push('Trainer/SME Selection');
+
+            // 6. Documents
+            if (!opportunity.proposalDocument) missingFields.push('Proposal Document');
+            if (!opportunity.poDocument) missingFields.push('PO Document');
+            if (!opportunity.invoiceDocument) missingFields.push('Invoice Document');
+
+            // 7. Delivery Documents
+            const docs = opportunity.deliveryDocuments || {};
+            if (!docs.attendance) missingFields.push('Attendance');
+            if (!docs.feedback) missingFields.push('Feedback');
+            if (!docs.assessment) missingFields.push('Assessment');
+            if (!docs.performance) missingFields.push('Performance Report');
+
+            if (missingFields.length > 0) {
+                return res.status(400).json({
+                    message: `Cannot mark as Completed. Missing: ${missingFields.join(', ')}`
+                });
+            }
+        }
+
+        opportunity.commonDetails.status = status;
+
+        // Log Activity
+        opportunity.activityLog.push({
+            action: 'Status Updated',
+            by: req.user._id,
+            role: req.user.role,
+            details: `Status changed to ${status}`
+        });
+
+        await opportunity.save(); // Pre-save hook will recalculate progress based on new status
+        res.json(opportunity);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // @route   PUT /api/opportunities/:id
 // @desc    Update opportunity (role-based field restrictions)
 // @access  Private
@@ -1008,7 +1126,7 @@ router.post('/:id/upload-delivery-doc', protect, authorize('Delivery Team', 'Sal
         }
 
         const { type } = req.body; // 'attendance', 'feedback', 'assessment', 'performance', 'sme_profile'
-        const validTypes = ['attendance', 'feedback', 'assessment', 'performance', 'sme_profile'];
+        const validTypes = ['Attendance', 'Feedback', 'Assessment', 'Performance', 'SME Profile'];
 
         if (!validTypes.includes(type)) {
             return res.status(400).json({ message: 'Invalid document type' });

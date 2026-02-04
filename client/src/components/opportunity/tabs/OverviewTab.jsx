@@ -3,9 +3,9 @@ import { Clock } from 'lucide-react';
 import Card from '../../ui/Card';
 import Badge from '../../ui/Badge';
 
-const OverviewTab = ({ opportunity, user }) => {
+const OverviewTab = ({ opportunity, user, updateStatus }) => {
     // Permission Checks
-    const isDelivery = user?.role === 'Delivery Head' || user?.role === 'Delivery Manager';
+    const isDelivery = user?.role === 'Delivery Head' || user?.role === 'Delivery Manager' || user?.role === 'Delivery Team';
     const isSales = user?.role === 'Sales Executive' || user?.role === 'Sales Manager';
     const isAdmin = user?.role === 'Super Admin';
 
@@ -37,7 +37,26 @@ const OverviewTab = ({ opportunity, user }) => {
                 {/* Left Column: Key Details */}
                 <div>
                     <Card>
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Key Details</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Status & Key Details</h3>
+
+                        {/* Status Dropdown */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Opportunity Status</label>
+                            <select
+                                className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                value={opportunity.commonDetails?.status || 'Active'}
+                                onChange={(e) => updateStatus && updateStatus(e.target.value)}
+                                disabled={!updateStatus || (!isSales && !isAdmin && !isDelivery)}
+                            >
+                                <option value="Active">Active (Auto-Calculated)</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Discontinued">Discontinued</option>
+                                {/* Allow manual overrides if needed, though calculator usually handles it */}
+                                <option value="Completed">Completed</option>
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">Set to Cancelled or Discontinued to stop progress tracking.</p>
+                        </div>
+
                         <div className="space-y-3">
                             <div className="flex justify-between border-b border-gray-100 pb-2">
                                 <span className="text-sm text-gray-500">Type</span>

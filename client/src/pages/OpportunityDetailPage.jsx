@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Edit, Save, X } from 'lucide-react';
+import { ArrowLeft, Edit, Save, X, FileText, Activity, Building2, Tag, Calendar, User, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -13,6 +13,7 @@ import BillingTab from '../components/opportunity/tabs/BillingTab';
 import RevenueTab from '../components/opportunity/tabs/RevenueTab';
 import VendorPayablesTab from '../components/opportunity/tabs/VendorPayablesTab';
 import { useCurrency } from '../context/CurrencyContext';
+import AlertModal from '../components/ui/AlertModal';
 
 
 const OpportunityDetailPage = () => {
@@ -29,6 +30,7 @@ const OpportunityDetailPage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [tabLoading, setTabLoading] = useState(false); // To prevent double clicks or race conditions during save
     const { currency } = useCurrency();
+    const [statusModal, setStatusModal] = useState({ isOpen: false, newStatus: '' });
 
     // Refs for tabs to call their internal save/cancel methods
     const salesRef = useRef();
@@ -178,11 +180,35 @@ const OpportunityDetailPage = () => {
         }
     };
 
+    // Direct Status Update for Overview Tab
+    const handleStatusChangeRequest = (newStatus) => {
+        setStatusModal({ isOpen: true, newStatus });
+    };
+
+    const executeStatusUpdate = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`http://localhost:5000/api/opportunities/${id}/status`, { status: statusModal.newStatus }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            addToast('Status updated successfully', 'success');
+            fetchOpportunity();
+            setStatusModal({ isOpen: false, newStatus: '' });
+        } catch (error) {
+            console.error('Error updating status:', error);
+            // Show specific error from backend (missing docs)
+            const msg = error.response?.data?.message || 'Failed to update status';
+            addToast(msg, 'error');
+            setStatusModal({ isOpen: false, newStatus: '' });
+        }
+    };
+
     // Render Active Tab
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview':
-                return <OverviewTab opportunity={opportunity} user={user} />;
+                return <OverviewTab opportunity={opportunity} user={user} updateStatus={handleStatusChangeRequest} />;
             case 'sales':
                 return (
                     <SalesTab
@@ -247,39 +273,94 @@ const OpportunityDetailPage = () => {
                     <button onClick={handleBack} className="mr-4 text-gray-600 hover:text-gray-900">
                         <ArrowLeft size={24} />
                     </button>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                                {opportunity.opportunityNumber}
-                                {canEditSales && (
-                                    <span className="text-gray-500 font-normal ml-3 border-l border-gray-300 pl-3">
-                                        {opportunity.client?.companyName || opportunity.clientName}
-                                    </span>
-                                )}
-                            </h1>
-                            {/* Status Badge */}
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold 
-                                ${opportunity.progressPercentage === 100 ? 'bg-green-100 text-green-800' :
-                                    opportunity.progressPercentage >= 50 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}>
-                                {opportunity.progressPercentage}% - {opportunity.statusLabel || 'Scheduled'}
-                            </span>
+                    <div className="flex items-center gap-6 flex-1 ml-4 overflow-x-auto">
+                        {/* Block 1: Opp ID */}
+                        <div className="flex items-center gap-3 min-w-max">
+                            <div className="p-2 bg-[#003D7A]/10 rounded-lg text-[#003D7A]">
+                                <FileText size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Opp ID</p>
+                                <p className="font-bold text-gray-900">{opportunity.opportunityNumber}</p>
+                            </div>
                         </div>
 
-                        <div className="flex items-center mt-2 text-sm text-gray-500 gap-4">
-                            {/* Type & Date */}
-                            <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700`}>
-                                    {opportunity.type}
-                                </span>
-                                <span className="text-gray-400">|</span>
-                                <span>{new Date(opportunity.createdAt).toLocaleDateString()}</span>
-                            </div>
+                        {/* Divider */}
+                        <div className="h-8 w-px bg-gray-200"></div>
 
-                            {(user.role === 'Sales Manager' || user.role === 'Super Admin') && (
-                                <p>
-                                    Created By: <span className="font-medium text-gray-700">{opportunity.createdBy?.name || 'N/A'}</span>
+                        {/* Block: Created By (Only for Managers/Delivery/Director) */}
+                        {(user.role === 'Sales Manager' || user.role === 'Super Admin' || user.role === 'Director' || user.role.startsWith('Delivery')) && (
+                            <>
+                                <div className="flex items-center gap-3 min-w-max">
+                                    <div className="p-2 bg-[#003D7A]/10 rounded-lg text-[#003D7A]">
+                                        <User size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Created By</p>
+                                        <p className="font-bold text-gray-900">{opportunity.createdBy?.name || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className="h-8 w-px bg-gray-200"></div>
+                            </>
+                        )}
+
+                        {/* Block 3: Client */}
+                        <div className="flex items-center gap-3 min-w-max">
+                            <div className="p-2 bg-[#003D7A]/10 rounded-lg text-[#003D7A]">
+                                <User size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Client</p>
+                                <p className="font-bold text-gray-900 truncate max-w-[200px]" title={opportunity.client?.companyName || opportunity.clientName}>
+                                    {opportunity.client?.companyName || opportunity.clientName || 'Unknown'}
                                 </p>
-                            )}
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-8 w-px bg-gray-200"></div>
+
+                        {/* Block 4: Category/Type */}
+                        <div className="flex items-center gap-3 min-w-max">
+                            <div className="p-2 bg-[#003D7A]/10 rounded-lg text-[#003D7A]">
+                                <GraduationCap size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Category</p>
+                                <p className="font-bold text-gray-900">{opportunity.type}</p>
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-8 w-px bg-gray-200"></div>
+
+                        {/* Block 5: Created Date */}
+                        <div className="flex items-center gap-3 min-w-max">
+                            <div className="p-2 bg-[#003D7A]/10 rounded-lg text-[#003D7A]">
+                                <Calendar size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Created</p>
+                                <p className="font-bold text-gray-900">
+                                    {new Date(opportunity.createdAt).toLocaleDateString()}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-8 w-px bg-gray-200"></div>
+
+                        {/* Block 2: Status (Moved to End) */}
+                        <div className="flex items-center gap-3 min-w-max">
+                            <div className={`w-9 h-9 flex items-center justify-center rounded-lg text-xs font-bold border ${opportunity.progressPercentage === 100 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-[#003D7A]/10 text-[#003D7A] border-[#003D7A]/20'}`}>
+                                {opportunity.progressPercentage}%
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Status</p>
+                                <p className={`font-bold text-sm ${opportunity.progressPercentage === 100 ? 'text-green-700' : 'text-[#003D7A]'}`}>
+                                    {opportunity.statusLabel || 'Scheduled'}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -379,6 +460,18 @@ const OpportunityDetailPage = () => {
                     {renderTabContent()}
                 </div>
             </div>
+
+            {/* Status Confirmation Modal */}
+            <AlertModal
+                isOpen={statusModal.isOpen}
+                onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+                title="Confirm Status Change"
+                message={`Are you sure you want to change the status to "${statusModal.newStatus}"?`}
+                confirmText="Yes, Change Status"
+                cancelText="No, Keep It"
+                type="warning"
+                onConfirm={executeStatusUpdate}
+            />
         </div >
     );
 };
