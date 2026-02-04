@@ -38,8 +38,13 @@ const LoginPage = () => {
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: white;
                         transition: background-color 5000s ease-in-out 0s;
-                        box-shadow: inset 0 0 20px 20px rgba(255, 255, 255, 0.2);
-                        border: 1px solid rgba(255, 255, 255, 0.3);
+                        box-shadow: inset 0 25px 20px -10px rgba(255, 255, 255, 0.15), inset 0 -25px 20px -10px rgba(0, 0, 0, 0.6), inset 0 0 0 1000px rgba(0, 0, 0, 0.1);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                    }
+                    /* Hide default password reveal button in Edge/IE */
+                    input::-ms-reveal,
+                    input::-ms-clear {
+                        display: none;
                     }
                 `}
             </style>
@@ -59,14 +64,13 @@ const LoginPage = () => {
                 {/* Overlay for better readability */}
                 <div className="absolute top-0 left-0 w-full h-full bg-black/20 z-10"></div>
 
-                {/* Login Card - No Background Container */}
-                <div className="p-8 w-full max-w-sm relative z-20">
+                {/* Login Card - Glassmorphism Container */}
+                <div className="p-8 pb-24 w-full max-w-md relative z-20 bg-gray-600/30 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20">
                     <div className="text-center mb-8">
                         <div className="flex flex-col items-center justify-center mb-4">
-                            <img src="/login-logo.png" alt="Global Knowledge" className="h-16 w-auto object-contain mb-3" />
-                            <h2 className="text-xl font-bold text-white">Global Knowledge Technologies</h2>
+                            <img src="/login-logo.png" alt="Global Knowledge" className="h-20 w-auto object-contain mb-4" />
+                            <h2 className="text-2xl font-bold text-white tracking-wide whitespace-nowrap">Global Knowledge Technologies</h2>
                         </div>
-
                     </div>
 
                     {error && (
@@ -75,8 +79,8 @@ const LoginPage = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-8">
                             <label className="block text-sm font-medium text-white mb-1">Email</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 z-10 pointer-events-none">
@@ -86,14 +90,14 @@ const LoginPage = () => {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none transition text-white placeholder-white/50 backdrop-blur-sm relative"
+                                    className="w-full pl-10 pr-4 py-3 bg-gradient-to-b from-white/10 to-black/60 rounded-full focus:ring-2 focus:ring-white/20 focus:border-white/30 outline-none transition text-white placeholder-white/40 backdrop-blur-sm relative shadow-lg"
                                     placeholder="name@company.com"
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div>
+                        <div className="mb-14">
                             <label className="block text-sm font-medium text-white mb-1">Password</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 z-10 pointer-events-none">
@@ -103,7 +107,7 @@ const LoginPage = () => {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-12 py-2.5 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none transition text-white placeholder-white/50 backdrop-blur-sm relative"
+                                    className="w-full pl-10 pr-12 py-3 bg-gradient-to-b from-white/10 to-black/60 rounded-full focus:ring-2 focus:ring-white/20 focus:border-white/30 outline-none transition text-white placeholder-white/40 backdrop-blur-sm relative shadow-lg"
                                     placeholder="••••••••"
                                     required
                                 />
@@ -119,7 +123,7 @@ const LoginPage = () => {
 
                         <button
                             type="submit"
-                            className="w-full bg-white/20 hover:bg-white/30 border border-white/30 text-white font-bold py-2.5 rounded-lg transition duration-200 transform hover:scale-[1.02] backdrop-blur-sm"
+                            className="w-2/3 mx-auto block bg-gradient-to-b from-white/10 to-black/60 hover:from-white/20 hover:to-black/50 text-white font-bold py-3 rounded-full transition-all duration-300 transform hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] backdrop-blur-sm shadow-lg active:scale-95"
                         >
                             Sign In
                         </button>
