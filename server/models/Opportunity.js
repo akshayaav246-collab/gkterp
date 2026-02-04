@@ -241,7 +241,7 @@ const OpportunitySchema = new mongoose.Schema({
         marketing: { type: Number, default: 0 },
         contingency: { type: Number, default: 0 },
         marketingPercent: { type: Number, default: 0, min: 0, max: 100 }, // Default 0%
-        contingencyPercent: { type: Number, default: 20, min: 0, max: 100 }, // Default 20%
+        contingencyPercent: { type: Number, default: 15, min: 0, max: 100 }, // Default 15%
         targetGpPercent: { type: Number, default: 30, min: 0, max: 100 }, // Added field
         breakdown: { type: mongoose.Schema.Types.Mixed, default: {} } // Stores detailed breakdown (rates, types, etc.)
     },
@@ -390,7 +390,7 @@ OpportunitySchema.pre('save', async function () {
         // Contingency Amount (Percentage of TOV)
         let contingencyPercent = exp.contingencyPercent;
         if (contingencyPercent === undefined || contingencyPercent === null) {
-            contingencyPercent = 20;
+            contingencyPercent = 15;
         }
         // Use saved amount if available (user override), otherwise calculate
         const contingencyAmount = (exp.contingency > 0) ? exp.contingency : ((tov * contingencyPercent) / 100);
@@ -431,12 +431,17 @@ OpportunitySchema.pre('save', async function () {
 
         // Only auto-update approval status if it hasn't been manually set to Approved or Rejected
         if (this.approvalStatus !== 'Approved' && this.approvalStatus !== 'Rejected') {
+            const contingencyPercent = (this.expenses && this.expenses.contingencyPercent !== undefined) ? this.expenses.contingencyPercent : 15;
+
             if (gpPercent < 10) {
                 this.approvalRequired = true;
-                // Pending Director: Logic handling moved to manual escalation
+                // Pending Director
             } else if (gpPercent >= 10 && gpPercent < 15) {
                 this.approvalRequired = true;
-                // Pending Manager: Logic handling moved to manual escalation
+                // Pending Manager
+            } else if (contingencyPercent < 10) {
+                this.approvalRequired = true;
+                // Pending Manager (Low Contingency)
             } else {
                 this.approvalRequired = false;
                 this.approvalStatus = 'Not Required';

@@ -230,6 +230,10 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
             if (exp.contingencyPercent === undefined || exp.contingencyPercent === null) {
                 exp.contingencyPercent = 15;
             }
+            // Clamp to 15 if legacy value is higher (fixes dropdown default to 1% issue)
+            if (exp.contingencyPercent > 15) {
+                exp.contingencyPercent = 15;
+            }
 
             // Auto-calculate Marketing & Contingency if values are missing
             const tov = initialData.commonDetails?.tov || 0;
@@ -451,7 +455,7 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
 
     // Marketing and Contingency percentages (still from expenses for display)
     const marketingPercent = activeData.expenses?.marketingPercent || 0;
-    const contingencyPercent = activeData.expenses?.contingencyPercent || 20;
+    const contingencyPercent = activeData.expenses?.contingencyPercent || 15;
 
     // User requested "Cost per day/Cost per participant"
     const totalDays = activeData.days || activeData.commonDetails?.trainingDays || 0; // Fallback attempts
@@ -630,7 +634,7 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Contingency (%)</label>
                                         <div className="flex space-x-2">
                                             <select
-                                                value={formData.expenses?.contingencyPercent ?? 20}
+                                                value={formData.expenses?.contingencyPercent ?? 15}
                                                 onChange={(e) => handleContingencyChange(parseFloat(e.target.value))}
                                                 disabled={!canEditExecution}
                                                 className={`flex-1 border p-2 rounded-lg text-sm ${!canEditExecution ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-200 focus:ring-2 focus:ring-primary-blue'}`}
