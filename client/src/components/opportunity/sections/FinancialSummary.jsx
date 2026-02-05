@@ -30,8 +30,12 @@ const FinancialSummary = ({ opportunity, poValue }) => {
         'venue', 'travel', 'accommodation', 'perDiem', 'localConveyance'
     ];
     const opEx = expenseTypes.reduce((sum, key) => sum + parseCurrency(exp[key]), 0);
-    const contingency = parseCurrency(exp.contingency);
-    const marketing = parseCurrency(exp.marketing);
+    // Calculate contingency dynamically from percentage to ensure it's always up-to-date
+    const contingencyPercent = exp.contingencyPercent ?? 15;
+    const contingency = (opEx * contingencyPercent) / 100;
+    // Calculate marketing dynamically from percentage
+    const marketingPercent = exp.marketingPercent ?? 0;
+    const marketing = (opEx * marketingPercent) / 100;
     const calculatedTotalExpense = opEx + contingency + marketing;
 
     // Calculate Profit & Variance
