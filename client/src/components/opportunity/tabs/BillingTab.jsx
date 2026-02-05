@@ -34,7 +34,8 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
 
     // Helper to Recalculate Totals based on current state
     const recalculateTotals = (data) => {
-        const exp = data.expenses || {};
+        // CRITICAL FOR REACTIVITY: Always clone expenses to ensure new reference
+        const exp = { ...(data.expenses || {}) };
         const common = data.commonDetails || {};
 
         // Helper to parse currency strings (remove commas)
@@ -369,7 +370,10 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
     const handleChange = (section, field, value) => {
         setFormData(prev => {
             const newState = { ...prev };
-            if (!newState[section]) newState[section] = {};
+            // CRITICAL FIX: Create a copy of the nested object to ensure React detects the change
+            // This fixes the issue where FinancialSummary wouldn't update because the 'expenses' reference didn't change
+            newState[section] = { ...(prev[section] || {}) };
+
             newState[section][field] = value;
 
             // Trigger Recalculation if modifying calculation inputs

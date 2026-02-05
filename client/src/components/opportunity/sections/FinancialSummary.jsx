@@ -52,7 +52,7 @@ const FinancialSummary = ({ opportunity, poValue }) => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO Amount</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Expense</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Expenses</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketing</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GK Revenue (Profit)</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO to Proposal Variance</th>
@@ -85,7 +85,7 @@ const FinancialSummary = ({ opportunity, poValue }) => {
                     </tbody>
                 </table>
                 <div className="mt-2 text-xs text-gray-500 italic">
-                    * GK Revenue (Profit) = PO Amount - Total Expenses
+                    * GK Revenue (Profit) = PO Amount - Overall Expenses
                     <br />
                     * PO to Proposal Variance = PO Amount - Proposal Value
                     <br />
