@@ -413,15 +413,20 @@ OpportunitySchema.pre('save', async function () {
         const days = this.days || 1;
         this.financials.costPerDay = this.financials.costPerDay = (days > 0) ? (this.financials.totalExpense / days) : 0;
 
-        // GKT Revenue = TOV - Total Expense
-        this.financials.gktRevenue = tov - this.financials.totalExpense;
+        // Base Calculation Value (Prioritize PO Value for "Financial Summary" sync)
+        const revenueBase = (this.poValue && this.poValue > 0) ? this.poValue : tov;
+
+        console.log(`Financial Calc: RevenueBase=${revenueBase} (PO=${this.poValue}, TOV=${tov})`);
+
+        // GKT Revenue = RevenueBase - Total Expense
+        this.financials.gktRevenue = revenueBase - this.financials.totalExpense;
 
         // GKT Revenue per Day
         this.financials.gktRevenuePerDay = (days > 0) ? (this.financials.gktRevenue / days) : 0;
 
-        // GP % = (GKT Revenue / TOV) * 100
-        if (tov > 0) {
-            this.financials.grossProfitPercent = (this.financials.gktRevenue / tov) * 100;
+        // GP % = (GKT Revenue / RevenueBase) * 100
+        if (revenueBase > 0) {
+            this.financials.grossProfitPercent = (this.financials.gktRevenue / revenueBase) * 100;
         } else {
             this.financials.grossProfitPercent = 0;
         }

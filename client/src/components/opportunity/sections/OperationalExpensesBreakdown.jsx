@@ -132,10 +132,15 @@ const OperationalExpensesBreakdown = ({
         // Initialize type if missing (only once per category)
         if (!data.type && typeOptions && canEdit && !initializedTypes.current.has(category)) {
             initializedTypes.current.add(category);
-            setTimeout(() => {
-                updateBreakdown(category, 'type', typeOptions[0].value);
-            }, 0);
+            // We don't need the timeout hack anymore as handleUpdate will catch it, 
+            // but keeping it doesn't hurt. 
         }
+
+        // Helper to ensure type is saved when value changes
+        const handleUpdate = (field, val) => {
+            // explicitly include selectedType (which defaults to first option) to ensure calculation works
+            updateBreakdown(category, { [field]: val, type: selectedType });
+        };
 
         return (
             <div className={`bg-gray-50 border border-gray-200 rounded-lg ${!canEdit ? 'p-2' : 'p-3'} mb-4 last:mb-0 h-full`}>
@@ -167,27 +172,27 @@ const OperationalExpensesBreakdown = ({
                         {category === 'trainerCost' && (
                             <>
                                 {selectedType === 'costPerDay' && (
-                                    <div className="col-span-2"><Input label="Rate / Day" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
+                                    <div className="col-span-2"><Input label="Rate / Day" value={data.rate} onChange={v => handleUpdate('rate', v)} /></div>
                                 )}
-                                {selectedType === 'costPerHour' && <><Input label="Hours" value={data.hours} onChange={v => updateBreakdown(category, 'hours', v)} /><Input label="Rate/Hour" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></>}
+                                {selectedType === 'costPerHour' && <><Input label="Hours" value={data.hours} onChange={v => handleUpdate('hours', v)} /><Input label="Rate/Hour" value={data.rate} onChange={v => handleUpdate('rate', v)} /></>}
                                 {selectedType === 'totalCost' && (
-                                    <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
+                                    <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => handleUpdate('rate', v)} /></div>
                                 )}
                             </>
                         )}
                         {category === 'material' && (
                             <>
-                                {selectedType === 'costPerPax' && <><Input label="Pax" value={data.pax || pax} onChange={v => updateBreakdown(category, 'pax', v)} /><Input label="Rate / Pax" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></>}
+                                {selectedType === 'costPerPax' && <><Input label="Pax" value={data.pax || pax} onChange={v => handleUpdate('pax', v)} /><Input label="Rate / Pax" value={data.rate} onChange={v => handleUpdate('rate', v)} /></>}
                                 {selectedType === 'overallCost' && (
-                                    <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
+                                    <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => handleUpdate('rate', v)} /></div>
                                 )}
                             </>
                         )}
                         {category === 'labs' && (
                             <>
-                                {(selectedType === 'costPerPaxDay' || selectedType === 'costPerPaxAllDays') && <><Input label="Pax" value={data.pax || pax} onChange={v => updateBreakdown(category, 'pax', v)} /><Input label={`Rate / Pax${selectedType === 'costPerPaxDay' ? ' / Day' : ''}`} value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></>}
+                                {(selectedType === 'costPerPaxDay' || selectedType === 'costPerPaxAllDays') && <><Input label="Pax" value={data.pax || pax} onChange={v => handleUpdate('pax', v)} /><Input label={`Rate / Pax${selectedType === 'costPerPaxDay' ? ' / Day' : ''}`} value={data.rate} onChange={v => handleUpdate('rate', v)} /></>}
                                 {selectedType === 'totalCost' && (
-                                    <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
+                                    <div className="col-span-2"><Input label="Total Cost" value={data.rate} onChange={v => handleUpdate('rate', v)} /></div>
                                 )}
                             </>
                         )}
@@ -195,7 +200,7 @@ const OperationalExpensesBreakdown = ({
                             <>
                                 {category === 'gkRoyalty' && <div className="col-span-2 text-xs text-gray-400 mb-1">Pax: {pax}, Days: {days}</div>}
                                 {(category === 'accommodation' || category === 'perDiem') && <div className="col-span-2 text-xs text-gray-400 mb-1">Days: {days}</div>}
-                                <div className="col-span-2"><Input label={category === 'gkRoyalty' ? 'Rate / Pax / Day' : 'Rate / Day'} value={data.rate} onChange={v => updateBreakdown(category, 'rate', v)} /></div>
+                                <div className="col-span-2"><Input label={category === 'gkRoyalty' ? 'Rate / Pax / Day' : 'Rate / Day'} value={data.rate} onChange={v => handleUpdate('rate', v)} /></div>
                             </>
                         )}
                     </div>

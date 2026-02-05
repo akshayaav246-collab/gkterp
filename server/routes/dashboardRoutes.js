@@ -977,13 +977,18 @@ router.get('/delivery/revamp-stats', protect, async (req, res) => {
             }
 
             // 4. Monthly GP% (Only for current year)
-            // Use Training Month if available and current year, else ignore or fallback to createdAt?
-            // User likely wants "GP based on delivery month".
-            if (trainingYear === year && trainingMonth && monthlyGpMap[trainingMonth]) {
+            // Fix: Map "January" -> "Jan" to match monthlyGpMap keys
+            const shortMonthMap = {
+                'January': 'Jan', 'February': 'Feb', 'March': 'Mar', 'April': 'Apr', 'May': 'May', 'June': 'Jun',
+                'July': 'Jul', 'August': 'Aug', 'September': 'Sep', 'October': 'Oct', 'November': 'Nov', 'December': 'Dec'
+            };
+            const targetMonth = shortMonthMap[trainingMonth] || trainingMonth; // Fallback if already short or undefined
+
+            if (trainingYear == year && targetMonth && monthlyGpMap[targetMonth]) {
                 const gpPercent = opp.financials?.grossProfitPercent || 0;
                 // Only consider if GP is calculated/meaningful (e.g. > -100)
-                monthlyGpMap[trainingMonth].totalGp += gpPercent;
-                monthlyGpMap[trainingMonth].count++;
+                monthlyGpMap[targetMonth].totalGp += gpPercent;
+                monthlyGpMap[targetMonth].count++;
             }
         });
 

@@ -15,15 +15,23 @@ const FinancialSummary = ({ opportunity, poValue }) => {
         })}`;
     };
 
+    // Helper to parse currency strings (remove commas)
+    const parseCurrency = (val) => {
+        if (!val) return 0;
+        if (typeof val === 'number') return val;
+        const strVal = String(val).replace(/,/g, '');
+        return parseFloat(strVal) || 0;
+    };
+
     // Calculate Total Expense
     const exp = opportunity.expenses || {};
     const expenseTypes = [
         'trainerCost', 'vouchersCost', 'gkRoyalty', 'material', 'labs',
         'venue', 'travel', 'accommodation', 'perDiem', 'localConveyance'
     ];
-    const opEx = expenseTypes.reduce((sum, key) => sum + (parseFloat(exp[key]) || 0), 0);
-    const contingency = parseFloat(exp.contingency) || 0;
-    const marketing = parseFloat(exp.marketing) || 0;
+    const opEx = expenseTypes.reduce((sum, key) => sum + parseCurrency(exp[key]), 0);
+    const contingency = parseCurrency(exp.contingency);
+    const marketing = parseCurrency(exp.marketing);
     const calculatedTotalExpense = opEx + contingency + marketing;
 
     // Calculate Profit & Variance
