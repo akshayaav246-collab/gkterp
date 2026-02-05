@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Check, FileText, DollarSign, Briefcase, X, ArrowLeft, Search, Filter, Bell as BellIcon, CheckCheck } from 'lucide-react';
 import notificationIcon from '../../assets/notification-icon.png';
+import searchIconVideo from '../../assets/search1.webm';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
@@ -399,13 +400,22 @@ const NotificationDropdown = () => {
 
                                     {/* Search Bar */}
                                     <div className="relative mb-4">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" size={18} />
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center z-10 pointer-events-none">
+                                            <video
+                                                src={searchIconVideo}
+                                                autoPlay
+                                                loop
+                                                muted
+                                                playsInline
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
                                         <input
                                             type="text"
                                             placeholder="Search notifications..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                                            className="w-full pl-14 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all relative z-0"
                                         />
                                     </div>
 

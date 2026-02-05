@@ -1126,7 +1126,8 @@ router.post('/:id/upload-delivery-doc', protect, authorize('Delivery Team', 'Sal
         }
 
         const { type } = req.body; // 'attendance', 'feedback', 'assessment', 'performance', 'sme_profile'
-        const validTypes = ['Attendance', 'Feedback', 'Assessment', 'Performance', 'SME Profile'];
+        // Fix: Types must match the schema keys (lowercase), not the UI labels
+        const validTypes = ['attendance', 'feedback', 'assessment', 'performance', 'sme_profile'];
 
         if (!validTypes.includes(type)) {
             return res.status(400).json({ message: 'Invalid document type' });
