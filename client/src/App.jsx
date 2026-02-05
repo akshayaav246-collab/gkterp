@@ -12,7 +12,7 @@ import OpportunityPage from './pages/OpportunityPage';
 import OpportunityDetailPage from './pages/OpportunityDetailPage';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import ProgramExecutionList from './pages/ProgramExecutionList';
-import ProgramExecution from './pages/ProgramExecutionPage';
+
 
 import SMEManagement from './pages/SMEManagement';
 
@@ -53,7 +53,7 @@ function App() {
                 {/* Delivery Routes */}
                 <Route path="/dashboard/delivery" element={<ProtectedRoute><Layout><DeliveryDashboard /></Layout></ProtectedRoute>} />
                 <Route path="/delivery/execution" element={<ProtectedRoute><Layout><ProgramExecutionList /></Layout></ProtectedRoute>} />
-                <Route path="/delivery/execution/:id" element={<ProtectedRoute><Layout><ProgramExecution /></Layout></ProtectedRoute>} />
+
 
                 <Route path="/smes" element={<ProtectedRoute><Layout><SMEManagement /></Layout></ProtectedRoute>} />
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Approval = require('../models/Approval');
-const DeliveryExecution = require('../models/DeliveryExecution');
+
 const Opportunity = require('../models/Opportunity');
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/authMiddleware');
@@ -28,7 +28,7 @@ router.get('/', protect, authorize('Director', 'Sales Manager'), async (req, res
                 path: 'opportunity',
                 populate: { path: 'client', select: 'companyName' }
             })
-            .populate('deliveryExecution')
+
             .populate('requestedBy', 'name email')
             .sort({ requestedAt: -1 });
 
@@ -77,16 +77,7 @@ router.post('/:id/approve', protect, authorize('Director', 'Sales Manager'), asy
             await opportunity.save();
         }
 
-        // Update DeliveryExecution status (if exists)
-        if (approval.deliveryExecution) {
-            const execution = await DeliveryExecution.findById(approval.deliveryExecution);
-            if (execution) {
-                execution.status = 'Approved';
-                execution.approvedBy = req.user._id;
-                execution.approvedAt = new Date();
-                await execution.save();
-            }
-        }
+
 
         // Notification for Requester
         const Notification = require('../models/Notification');
@@ -141,14 +132,7 @@ router.post('/:id/reject', protect, authorize('Director', 'Sales Manager'), asyn
             await opportunity.save();
         }
 
-        // Update DeliveryExecution status
-        if (approval.deliveryExecution) {
-            const execution = await DeliveryExecution.findById(approval.deliveryExecution);
-            if (execution) {
-                execution.status = 'Rejected';
-                await execution.save();
-            }
-        }
+
 
         // Notification for Requester
         const Notification = require('../models/Notification');
@@ -170,61 +154,7 @@ router.post('/:id/reject', protect, authorize('Director', 'Sales Manager'), asyn
     }
 });
 
-// @route   POST /api/approvals/request
-// @desc    Create approval request (called by Delivery team when saving with GP < 15%)
-// @access  Private (Delivery Team)
-router.post('/request', protect, authorize('Delivery Team'), async (req, res) => {
-    try {
-        const { deliveryExecutionId, opportunityId, gpPercent, totalExpense, gktRevenue, grossProfit } = req.body;
 
-        // Determine approval level based on GP
-        let approvalLevel;
-        let assignedTo = null;
-
-        if (gpPercent < 10) {
-            approvalLevel = 'Director';
-            // Find the Director
-            const director = await User.findOne({ role: 'Director' });
-            assignedTo = director?._id;
-        } else if (gpPercent >= 10 && gpPercent < 15) {
-            approvalLevel = 'Manager';
-            // Find the Sales Manager who created the opportunity
-            const opportunity = await Opportunity.findById(opportunityId).populate('createdBy');
-            if (opportunity && opportunity.createdBy) {
-                // If created by Executive, find their manager
-                if (opportunity.createdBy.role === 'Sales Executive') {
-                    const manager = await User.findById(opportunity.createdBy.reportingManager);
-                    assignedTo = manager?._id;
-                } else if (opportunity.createdBy.role === 'Sales Manager') {
-                    assignedTo = opportunity.createdBy._id;
-                }
-            }
-        } else {
-            return res.status(400).json({ message: 'No approval required for GP >= 15%' });
-        }
-
-        // Create approval request
-        const approval = new Approval({
-            deliveryExecution: deliveryExecutionId,
-            opportunity: opportunityId,
-            gpPercent,
-            approvalLevel,
-            assignedTo,
-            requestedBy: req.user._id,
-            snapshot: {
-                totalExpense,
-                gktRevenue,
-                grossProfit
-            }
-        });
-
-        await approval.save();
-
-        res.status(201).json({ message: 'Approval request created', approval });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
 
 // @route   POST /api/approvals/escalate
 // @desc    Escalate opportunity with low GP or Low Contingency to Manager (called by Sales Executive)

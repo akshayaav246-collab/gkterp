@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const ApprovalSchema = new mongoose.Schema({
-    deliveryExecution: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'DeliveryExecution',
-        required: false
-    },
+
 
     opportunity: {
         type: mongoose.Schema.Types.ObjectId,

@@ -26,7 +26,7 @@ const clientRoutes = require('./routes/clientRoutes');
 const opportunityRoutes = require('./routes/opportunityRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 // const vendorRoutes = require('./routes/vendorRoutes');
-const deliveryRoutes = require('./routes/deliveryRoutes');
+
 const approvalRoutes = require('./routes/approvalRoutes');
 const targetRoutes = require('./routes/targetRoutes');
 const documentRoutes = require('./routes/documentRoutes');
@@ -42,7 +42,7 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 // Vendor Routes removed
-app.use('/api/delivery', deliveryRoutes);
+
 app.use('/api/approvals', approvalRoutes);
 app.use('/api/targets', targetRoutes);
 app.use('/api/documents', documentRoutes);

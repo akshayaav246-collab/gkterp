@@ -22,8 +22,8 @@ const OperationalExpensesBreakdown = ({
     const getBreakdown = () => activeData.expenses?.breakdown || {};
 
     // Helper accessors for days and pax from activeData (for immediate reactivity) or opportunity
-    const days = activeData.days || activeData.commonDetails?.trainingDays || opportunity.days || opportunity.commonDetails?.trainingDays || 0;
-    const pax = activeData.participants || activeData.commonDetails?.totalParticipants || opportunity.participants || opportunity.commonDetails?.totalParticipants || 0;
+    const days = activeData.days || activeData.commonDetails?.duration || activeData.commonDetails?.trainingDays || opportunity.days || opportunity.commonDetails?.duration || opportunity.commonDetails?.trainingDays || 0;
+    const pax = activeData.participants || activeData.commonDetails?.attendanceParticipants || activeData.commonDetails?.totalParticipants || opportunity.participants || opportunity.commonDetails?.attendanceParticipants || opportunity.commonDetails?.totalParticipants || 0;
 
     const [localBreakdown, setLocalBreakdown] = useState({});
     const initializedTypes = useRef(new Set());
@@ -61,7 +61,7 @@ const OperationalExpensesBreakdown = ({
             }
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [days, pax, localBreakdown]); // converting localBreakdown dependency is safe if we want to sync calculations
+    }, [days, pax]); // Only run when global factors change
 
     const updateBreakdown = (category, fieldOrUpdates, value) => {
         if (!canEdit) return;
@@ -365,7 +365,7 @@ const OperationalExpensesBreakdown = ({
                 <span className="text-sm font-bold text-gray-700">Total Expenses</span>
                 <span className="text-xl font-bold text-primary-blue">
                     {CURRENCY_SYMBOL} {((Object.keys(activeData.expenses || {}).reduce((sum, key) => {
-                        if (key === 'breakdown' || key === 'marketingPercent' || key === 'contingencyPercent' || key === 'targetGpPercent') return sum;
+                        if (key === 'breakdown' || key === 'marketingPercent' || key === 'contingencyPercent' || key === 'targetGpPercent' || key === 'marketing' || key === 'contingency') return sum;
                         return sum + (parseFloat(activeData.expenses[key]) || 0);
                     }, 0)) / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </span>

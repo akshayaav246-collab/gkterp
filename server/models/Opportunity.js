@@ -382,18 +382,18 @@ OpportunitySchema.pre('save', async function () {
         // TOV from commonDetails or financials
         const tov = (this.commonDetails && this.commonDetails.tov) || (this.financials && this.financials.tov) || 0;
 
-        // Marketing Amount (Percentage of TOV)
+        // Marketing Amount (Percentage of Base Expense)
         const marketingPercent = (exp.marketingPercent !== undefined && exp.marketingPercent !== null) ? exp.marketingPercent : 0;
         // Use saved amount if available (user override), otherwise calculate
-        const marketingAmount = (exp.marketing > 0) ? exp.marketing : ((tov * marketingPercent) / 100);
+        const marketingAmount = (exp.marketing > 0) ? exp.marketing : ((baseExpense * marketingPercent) / 100);
 
-        // Contingency Amount (Percentage of TOV)
+        // Contingency Amount (Percentage of Base Expense)
         let contingencyPercent = exp.contingencyPercent;
         if (contingencyPercent === undefined || contingencyPercent === null) {
             contingencyPercent = 15;
         }
         // Use saved amount if available (user override), otherwise calculate
-        const contingencyAmount = (exp.contingency > 0) ? exp.contingency : ((tov * contingencyPercent) / 100);
+        const contingencyAmount = (exp.contingency > 0) ? exp.contingency : ((baseExpense * contingencyPercent) / 100);
 
         console.log(`Financial Calc: TOV=${tov}, Base=${baseExpense}, Mrk%=${marketingPercent}, Cont%=${contingencyPercent}`);
 

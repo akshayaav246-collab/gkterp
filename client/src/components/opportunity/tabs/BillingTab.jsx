@@ -64,7 +64,7 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
         // 4. Total Expenses (OpEx + Contingency + Marketing)
         const totalExpenses = opEx + contingencyAmount + marketingAmount;
 
-        // 5. Profit Amount (Markup Logic: Total Expenses * Profit%)
+        // 5. Profit Amount (Markup Logic: Profit = Total Expenses * Profit%)
         const profitPercent = exp.targetGpPercent ?? 30;
         const profitAmount = (totalExpenses * profitPercent) / 100;
 
@@ -465,12 +465,13 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
     const contingencyPercent = activeData.expenses?.contingencyPercent || 15;
 
     // User requested "Cost per day/Cost per participant"
-    const totalDays = activeData.days || activeData.commonDetails?.trainingDays || 0; // Fallback attempts
-    const totalParticipants = activeData.participants || activeData.commonDetails?.totalParticipants || 0;
+    const totalDays = activeData.days || activeData.commonDetails?.duration || activeData.commonDetails?.trainingDays || 0;
+    const totalParticipants = activeData.participants || activeData.commonDetails?.attendanceParticipants || activeData.commonDetails?.totalParticipants || 0;
 
-    const proposalValue = activeData.commonDetails?.tov || 0;
-    const costPerDay = totalDays > 0 ? (proposalValue / totalDays).toFixed(2) : 0;
-    const costPerParticipant = totalParticipants > 0 ? (proposalValue / totalParticipants).toFixed(2) : 0;
+    const proposalValue = formData.commonDetails?.tov || activeData.commonDetails?.tov || 0;
+    // Keep as numbers for formatting later
+    const costPerDay = totalDays > 0 ? (proposalValue / totalDays) : 0;
+    const costPerParticipant = totalParticipants > 0 ? (proposalValue / totalParticipants) : 0;
 
     // --- LOCAL EXPENSE VALUES (For Expense Breakdown Table Editing) ---
     // Calculate sum of visible operational expenses for table footer
@@ -561,6 +562,11 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                                         </div>
                                     ) : (
                                         <div>
+                                            {opportunity.approvalStatus === 'Not Required' && (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                                    No Approval Required
+                                                </span>
+                                            )}
                                             {opportunity.approvalStatus === 'Draft' && (
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
                                                     Draft
@@ -595,9 +601,12 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                                         <span>
                                             {(() => {
                                                 const tov = formData.commonDetails?.tov || 0;
-                                                const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
-                                                    (parseFloat(activeData.expenses?.contingency) || 0) +
-                                                    (parseFloat(activeData.expenses?.marketing) || 0);
+                                                const opEx = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0);
+                                                const contPerc = activeData.expenses?.contingencyPercent ?? 15;
+                                                const markPerc = activeData.expenses?.marketingPercent ?? 0;
+                                                const contAmt = (opEx * contPerc) / 100;
+                                                const markAmt = (opEx * markPerc) / 100;
+                                                const totalExp = opEx + contAmt + markAmt;
                                                 const profit = tov - totalExp;
                                                 return tov > 0 ? ((profit / tov) * 100).toFixed(2) : '0.00';
                                             })()}%
@@ -626,10 +635,14 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                                             <div className="flex-1 border p-2 rounded-lg text-sm bg-gray-50 text-gray-700 text-right font-medium flex items-center justify-end">
                                                 {CURRENCY_SYMBOL} {(() => {
                                                     const tov = formData.commonDetails?.tov || 0;
-                                                    const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
-                                                        (parseFloat(activeData.expenses?.contingency) || 0) +
-                                                        (parseFloat(activeData.expenses?.marketing) || 0);
-                                                    const profit = tov - totalExp;
+                                                    const opEx = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0);
+                                                    const contPerc = activeData.expenses?.contingencyPercent ?? 15;
+                                                    const markPerc = activeData.expenses?.marketingPercent ?? 0;
+                                                    const contAmt = (opEx * contPerc) / 100;
+                                                    const markAmt = (opEx * markPerc) / 100;
+                                                    const totalExp = opEx + contAmt + markAmt;
+                                                    const gpPerc = formData.expenses?.targetGpPercent ?? 30;
+                                                    const profit = (totalExp * gpPerc) / 100;
                                                     return (profit / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
                                                 })()}
                                             </div>
@@ -679,12 +692,15 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                                     {/* Total Expenses - Display Only */}
                                     <div className="mt-4 pt-4 border-t border-gray-100">
                                         <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                            <span className="text-sm font-bold text-blue-800">Total Expenses</span>
+                                            <span className="text-sm font-bold text-blue-800">Overall Expenses</span>
                                             <span className="text-lg font-extrabold text-blue-800">
                                                 {CURRENCY_SYMBOL} {(() => {
-                                                    const totalExp = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0) +
-                                                        (parseFloat(activeData.expenses?.contingency) || 0) +
-                                                        (parseFloat(activeData.expenses?.marketing) || 0);
+                                                    const opEx = expenseTypes.reduce((sum, type) => sum + (parseFloat(activeData.expenses?.[type.key]) || 0), 0);
+                                                    const contPerc = activeData.expenses?.contingencyPercent ?? 15;
+                                                    const markPerc = activeData.expenses?.marketingPercent ?? 0;
+                                                    const contAmt = (opEx * contPerc) / 100;
+                                                    const markAmt = (opEx * markPerc) / 100;
+                                                    const totalExp = opEx + contAmt + markAmt;
                                                     return (totalExp / CONVERSION_RATE).toLocaleString(undefined, { maximumFractionDigits: 0 });
                                                 })()}
                                             </span>
