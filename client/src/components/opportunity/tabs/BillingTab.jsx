@@ -433,8 +433,14 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
         // Marketing and Contingency removed from breakdown as requested
     ];
 
-    // Use formData for calculations if editing, else opportunity
-    const activeData = isEditing ? formData : opportunity;
+    // Use formData for calculations if it has expenses, else fallback to opportunity
+    // This MERGE strategy ensures that if formData has updates (from handleChange), they are used regardless of isEditing flag quirks
+    const activeData = {
+        ...opportunity,
+        ...formData,
+        expenses: { ...(opportunity.expenses || {}), ...(formData.expenses || {}) },
+        commonDetails: { ...(opportunity.commonDetails || {}), ...(formData.commonDetails || {}) }
+    };
 
     // --- FINANCE-BASED CALCULATIONS (Read-Only from Finance Module) ---
     // TOV: From Finance Client Receivables
