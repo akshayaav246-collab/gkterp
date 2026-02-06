@@ -724,17 +724,7 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                 )}
             </div>
 
-            {/* Sales View: Financial Summary (Consistent with Delivery Logic) */}
-            {!isDelivery && (
-                <div className="mt-8">
-                    <Card>
-                        <FinancialSummary
-                            opportunity={activeData}
-                            poValue={activeData.poValue}
-                        />
-                    </Card>
-                </div>
-            )}
+
 
             <AlertModal
                 isOpen={alertConfig.isOpen}
