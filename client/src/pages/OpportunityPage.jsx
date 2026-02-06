@@ -217,25 +217,25 @@ const OpportunityPage = () => {
                     </div>
                 </div>
 
-                <div className="overflow-auto h-[calc(100vh-280px)]">
+                <div className="overflow-auto h-[calc(100vh-240px)]">
                     <table className="min-w-full text-left text-sm relative">
                         <thead className="border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th className="px-6 py-3 font-semibold text-gray-900">Opp ID</th>
-                                <th className="px-6 py-3 font-semibold text-gray-900">Client</th>
+                                <th className="px-6 py-2 font-semibold text-gray-900">Opp ID</th>
+                                <th className="px-6 py-2 font-semibold text-gray-900">Client</th>
                                 {isDeliveryRole ? (
-                                    <th className="px-6 py-3 font-semibold text-gray-900">Created By</th>
+                                    <th className="px-6 py-2 font-semibold text-gray-900">Created By</th>
                                 ) : (
                                     <>
-                                        <th className="px-6 py-3 font-semibold text-gray-900">Contact Person</th>
+                                        <th className="px-6 py-2 font-semibold text-gray-900">Contact Person</th>
                                         {user?.role === 'Sales Manager' && (
-                                            <th className="px-6 py-3 font-semibold text-gray-900">Created By</th>
+                                            <th className="px-6 py-2 font-semibold text-gray-900">Created By</th>
                                         )}
                                     </>
                                 )}
-                                <th className="px-6 py-3 font-semibold text-gray-900">Type</th>
-                                <th className="px-6 py-3 font-semibold text-gray-900">Progress</th>
-                                <th className="px-6 py-3 font-semibold text-gray-900">Approval Status</th>
+                                <th className="px-6 py-2 font-semibold text-gray-900">Type</th>
+                                <th className="px-6 py-2 font-semibold text-gray-900">Progress</th>
+                                <th className="px-6 py-2 font-semibold text-gray-900">Approval Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -292,21 +292,21 @@ const OpportunityPage = () => {
 
                                     return (
                                         <tr key={opp._id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate(`/opportunities/${opp._id}`)}>
-                                            <td className="px-6 py-4 font-bold text-gray-900">
+                                            <td className="px-6 py-2 font-bold text-gray-900">
                                                 {opp.opportunityNumber}
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-2">
                                                 <div className="font-medium text-gray-900">{opp.client?.companyName || opp.clientName || 'N/A'}</div>
                                                 <div className="text-xs text-gray-500">{opp.client?.sector}</div>
                                             </td>
 
                                             {isDeliveryRole ? (
-                                                <td className="px-6 py-4">
+                                                <td className="px-6 py-2">
                                                     <div className="font-medium text-gray-900">{opp.createdBy?.name || 'N/A'}</div>
                                                 </td>
                                             ) : (
                                                 <>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-6 py-2">
                                                         {contactDetails ? (
                                                             <div className="flex flex-col">
                                                                 <div className="font-medium text-gray-900">{contactDetails.name}</div>
@@ -317,16 +317,16 @@ const OpportunityPage = () => {
                                                         )}
                                                     </td>
                                                     {user?.role === 'Sales Manager' && (
-                                                        <td className="px-6 py-4">
+                                                        <td className="px-6 py-2">
                                                             <div className="font-medium text-gray-900">{opp.createdBy?.name || 'N/A'}</div>
                                                         </td>
                                                     )}
                                                 </>
                                             )}
-                                            <td className="px-6 py-4 text-gray-700">{opp.type}</td>
+                                            <td className="px-6 py-2 text-gray-700">{opp.type}</td>
 
                                             {/* Progress Column */}
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-2">
                                                 <div className="flex flex-col space-y-2 max-w-[140px]">
                                                     <div className="flex items-center space-x-2">
                                                         <div className="w-16 bg-gray-200 rounded-full h-1.5">
@@ -362,7 +362,7 @@ const OpportunityPage = () => {
                                             </td>
 
                                             {/* Status Column (Approval Status) */}
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-2">
                                                 {statusBadge}
                                             </td>
                                         </tr>
