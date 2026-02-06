@@ -21,8 +21,7 @@ const getAccessibleUserIds = async (user) => {
 // @access  Private (Sales Executive, Sales Manager)
 router.post('/', protect, authorize('Sales Executive', 'Sales Manager'), async (req, res) => {
     try {
-        console.log('📝 Creating client with data:', req.body);
-        console.log('👤 User:', req.user?.name, req.user?.role);
+
 
         const { companyName, sector, contactPersons } = req.body;
 

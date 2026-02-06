@@ -379,8 +379,7 @@ router.put('/:id', protect, async (req, res) => {
         const updates = req.body;
 
         // Validate field-level permissions
-        console.log(`User ${req.user.name} (${req.user.role}) attempting to update opportunity ${req.params.id}`);
-        console.log('Update payload keys:', Object.keys(updates));
+
 
         for (const fieldPath in updates) {
             const isAllowed = opportunity.canEdit(fieldPath, req.user.role);

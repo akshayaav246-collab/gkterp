@@ -132,13 +132,6 @@ router.get('/all-opportunities', protect, async (req, res) => {
             .populate('client', 'companyName name')
             .lean();
 
-        console.log('🔍 Backend - Found opportunities:', opportunities.length);
-        if (opportunities.length > 0) {
-            console.log('🔍 Backend - First opp type:', opportunities[0].type);
-            console.log('🔍 Backend - First opp commonDetails:', opportunities[0].commonDetails);
-            console.log('🔍 Backend - First opp TOV:', opportunities[0].commonDetails?.tov);
-            console.log('🔍 Backend - First opp PO Value:', opportunities[0].poValue);
-        }
 
         const formatted = opportunities.map(opp => ({
             _id: opp._id,

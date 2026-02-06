@@ -3,10 +3,10 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "dev": "concurrently \"npm run server\" \"npm run client\" --kill-others --prefix-colors auto",
-        "server": "cd server && npm run dev",
-        "client": "cd client && npm run dev",
-        "install-all": "cd server && npm install && cd ../client && npm install"
+        "postinstall": "npm install --prefix backend && npm install --prefix frontend",
+        "dev": "concurrently \"npm run backend\" \"npm run frontend\" --kill-others --prefix-colors auto",
+        "backend": "npm run dev --prefix backend",
+        "frontend": "npm run dev --prefix frontend"
     },
     "devDependencies": {
         "concurrently": "^8.2.2"
