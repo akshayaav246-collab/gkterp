@@ -62,7 +62,7 @@ const LoginPage = () => {
                 </video>
 
                 {/* Overlay for better readability */}
-                <div className="absolute top-0 left-0 w-full h-full bg-black/20 z-10"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-black/5 z-10"></div>
 
                 {/* Login Card - Glassmorphism Container */}
                 <div className="p-8 pb-24 w-full max-w-md relative z-20 bg-gray-600/30 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20">
@@ -125,7 +125,7 @@ const LoginPage = () => {
                             type="submit"
                             className="w-2/3 mx-auto block bg-gradient-to-b from-white/10 to-black/60 hover:from-white/20 hover:to-black/50 text-white font-bold py-3 rounded-full transition-all duration-300 transform hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] backdrop-blur-sm shadow-lg active:scale-95"
                         >
-                            Login 
+                            Login
                         </button>
                     </form>
                 </div>
