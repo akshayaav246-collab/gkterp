@@ -106,10 +106,11 @@ function calculateOpportunityProgress(opportunity) {
             // Sizing: No of IDs, Duration
             hasScope = (
                 typeDetails.technology &&
-                typeDetails.requirement &&
+                typeDetails.labRequirement &&
                 typeDetails.region
             );
-            hasSizing = (typeDetails.noOfIds > 0 && typeDetails.duration > 0);
+            // Duration is string (e.g., "1 month"), parseInt handles it.
+            hasSizing = ((typeDetails.numberOfIDs > 0) && (parseInt(typeDetails.duration) > 0));
             break;
 
         default:

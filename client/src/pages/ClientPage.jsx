@@ -712,9 +712,9 @@ const ClientPage = () => {
                         </div>
 
                         {/* Client Table */}
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full text-left text-sm">
-                                <thead className="border-b border-gray-200">
+                        <div className="overflow-auto h-[calc(100vh-240px)]">
+                            <table className="min-w-full text-left text-sm relative">
+                                <thead className="border-b border-gray-200 sticky top-0 bg-white z-10 shadow-sm">
                                     <tr>
                                         <th className="px-6 py-3 font-semibold text-gray-900">Company Name</th>
                                         <th className="px-6 py-3 font-semibold text-gray-900">Contact Person</th>
