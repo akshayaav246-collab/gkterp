@@ -36,7 +36,8 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
     const recalculateTotals = (data) => {
         // CRITICAL FOR REACTIVITY: Always clone expenses to ensure new reference
         const exp = { ...(data.expenses || {}) };
-        const common = data.commonDetails || {};
+        // ALSO CRITICAL: Clone commonDetails because we mutate common.tov below
+        const common = { ...(data.commonDetails || {}) };
 
         // Helper to parse currency strings (remove commas)
         const parseCurrency = (val) => {
@@ -722,6 +723,18 @@ const BillingTab = forwardRef(({ opportunity, canEdit, isEditing, refreshData },
                     </div>
                 )}
             </div>
+
+            {/* Sales View: Financial Summary (Consistent with Delivery Logic) */}
+            {!isDelivery && (
+                <div className="mt-8">
+                    <Card>
+                        <FinancialSummary
+                            opportunity={activeData}
+                            poValue={activeData.poValue}
+                        />
+                    </Card>
+                </div>
+            )}
 
             <AlertModal
                 isOpen={alertConfig.isOpen}

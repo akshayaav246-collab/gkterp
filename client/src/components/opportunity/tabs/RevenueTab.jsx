@@ -26,9 +26,51 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
         poDate: ''
     });
 
+    // Helper to Recalculate Totals (Mirroring BillingTab logic for consistency)
+    const recalculateTotals = (data) => {
+        const exp = { ...(data.expenses || {}) };
+        const common = { ...(data.commonDetails || {}) };
+
+        const parseCurrency = (val) => {
+            if (!val) return 0;
+            const strVal = String(val).replace(/,/g, '');
+            return parseFloat(strVal) || 0;
+        };
+
+        const expenseTypesList = [
+            'trainerCost', 'vouchersCost', 'gkRoyalty', 'material', 'labs',
+            'venue', 'travel', 'accommodation', 'perDiem', 'localConveyance'
+        ];
+        const opEx = expenseTypesList.reduce((sum, key) => sum + parseCurrency(exp[key]), 0);
+
+        const contingencyPercent = exp.contingencyPercent ?? 15;
+        const contingencyAmount = (opEx * contingencyPercent) / 100;
+
+        const marketingPercent = exp.marketingPercent ?? 0;
+        const marketingAmount = (opEx * marketingPercent) / 100;
+
+        const totalExpenses = opEx + contingencyAmount + marketingAmount;
+
+        // Profit logic (Cost Plus)
+        const profitPercent = exp.targetGpPercent ?? 30;
+        const profitAmount = (totalExpenses * profitPercent) / 100;
+
+        const finalTov = totalExpenses + profitAmount;
+        common.tov = Math.round(finalTov);
+
+        return { ...data, commonDetails: common };
+    };
+
     useEffect(() => {
         if (opportunity) {
+            // Apply recalculation to ensure TOV is consistent with expenses
+            // even if DB has stale 'tov' value.
+            const calculatedOpp = recalculateTotals(opportunity);
+
             setFormData({
+                // Store the calculated TOV in commonDetails within formData if needed, 
+                // but we primarily use it for creating the 'activeData' passed to FinancialSummary
+                ...calculatedOpp,
                 poValue: opportunity.poValue || 0,
                 invoiceValue: opportunity.invoiceValue || 0,
                 poNumber: opportunity.commonDetails?.clientPONumber || '',
@@ -354,7 +396,17 @@ const RevenueTab = forwardRef(({ opportunity, canEdit, refreshData, isEditing },
             {isSales && (
                 <div className="max-w-5xl mx-auto">
                     <Card>
-                        <FinancialSummary opportunity={opportunity} poValue={formData.poValue} />
+                        {/* Use calculated data (activeData) to ensure TOV is dynamic even if DB is stale */}
+                        <FinancialSummary
+                            opportunity={{
+                                ...opportunity,
+                                ...formData, // Includes recalculated commonDetails.tov
+                                expenses: { ...opportunity.expenses, ...formData.expenses }, // Ensure expenses are merged if present
+                                commonDetails: { ...opportunity.commonDetails, ...formData.commonDetails }, // Ensure TOV override
+                                poValue: parseFloat(formData.poValue) || 0
+                            }}
+                            poValue={parseFloat(formData.poValue) || 0}
+                        />
                     </Card>
                 </div>
             )}
